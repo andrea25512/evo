@@ -4,12 +4,14 @@ import pandas
 from tqdm import tqdm
 from transformers import CLIPProcessor, CLIPModel
 from PIL import Image
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, random_split
 import torch
 import transformers
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
 device = "cuda:0"
+seed = 42
+test_images_number = 100
 
 template = { 
     "standard": """
@@ -80,6 +82,8 @@ def crossover(model, tokenizer, text1, text2):
     return get_final_prompt(output_text)
 
 if __name__ == "__main__":
+    torch.manual_seed(seed)
+
     clip_model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
     clip_model = clip_model.to(device).eval()
     clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
@@ -94,7 +98,8 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
 
     dataset = ImageDataset("data/imagenet-a","classes.csv", clip_processor)
-    loader = DataLoader(dataset, batch_size=1, shuffle=False, num_workers=1)
+    test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
+    loader = DataLoader(test_samples, batch_size=1, shuffle=False, num_workers=1)
 
     similarity = evaluate(loader, prompt, clip_model, clip_processor)
     print(similarity)
