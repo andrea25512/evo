@@ -1,5 +1,6 @@
 from torch.utils.data import Dataset
 import os
+import random
 import pandas
 from tqdm import tqdm
 from transformers import CLIPProcessor, CLIPModel
@@ -36,6 +37,7 @@ class ImageDataset(Dataset):
     def __init__(self, images_root, csv_location, processor):
         image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp')
 
+        # Collect paths to all valid image files
         self.image_files = []
         for root, _, files in os.walk(os.path.join(script_dir, images_root)):
             for file in files:
@@ -49,10 +51,12 @@ class ImageDataset(Dataset):
         return len(self.image_files)
 
     def __getitem__(self, index):
+        # Preprocess the image and fetch its label
         image = self.processor(images=Image.open(self.image_files[index]).convert('RGB'), return_tensors="pt")['pixel_values'][0]
         label = self.map[self.map.id == self.image_files[index].split("/")[-2]].description.item()
         return (image, label)
 
+# Compute average similarity between images and caption templates
 def evaluate(loader, query, clip_model, clip_processor):
     similarity = 0
     for images, labels in tqdm(loader):
@@ -63,6 +67,7 @@ def evaluate(loader, query, clip_model, clip_processor):
     similarity = similarity / len(loader)
     return similarity
 
+# Extract the final prompt wrapped in <prompt> tags
 def get_final_prompt(text):
     parts = text.split("<prompt>")
     if len(parts) > 1:
@@ -74,6 +79,7 @@ def get_final_prompt(text):
             text = text[1:-1]
         return text
 
+# Generate a new prompt by combining two templates via an LLM
 def crossover_mutation(model, tokenizer, text1, text2):
     first_device = next(model.parameters()).device
     request_content = template["standard"].replace("<prompt1>", text1).replace("<prompt2>", text2)
@@ -82,26 +88,78 @@ def crossover_mutation(model, tokenizer, text1, text2):
     output_text = tokenizer.batch_decode(out.cpu(), skip_special_tokens=True)[0]
     return get_final_prompt(output_text)
 
+# Tune prompt using GA
+def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=10):
+    # Initialize population
+    population = initial_population
+    best_prompt = None
+    best_score = -float('inf')
+    
+    for generation in range(generations):
+        print(f"Generation {generation + 1}/{generations}")
+        
+        # Evaluate population
+        fitness_scores = []
+        for prompt in population:
+            score = evaluate(loader, prompt, clip_model, clip_processor)
+            fitness_scores.append(score)
+        
+        # Track the best prompt
+        max_score = max(fitness_scores)
+        if max_score > best_score:
+            best_score = max_score
+            best_prompt = population[fitness_scores.index(max_score)]
+        
+        print(f"Best Score in Generation {generation + 1}: {max_score}")
+        
+        # Selection (roulette wheel selection)
+        fitness_probs = [score / sum(fitness_scores) for score in fitness_scores]
+        selected_parents = [population[i] for i in torch.multinomial(torch.tensor(fitness_probs), num_samples=pop_size, replacement=True)]
+        
+        # Crossover and mutation
+        new_population = []
+        for _ in range(pop_size // 2):
+            # Select two random parents
+            parent1, parent2 = random.sample(selected_parents, 2)
+            child = crossover_mutation(model, tokenizer, parent1, parent2)
+            new_population.append(child)
+        
+        # Update population
+        population = new_population
+
+    return best_prompt, best_score
+
 if __name__ == "__main__":
+    # Set up the models and dataset
     torch.manual_seed(seed)
 
-    clip_model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14")
-    clip_model = clip_model.to(device).eval()
+    clip_model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14").to(device).eval()
     clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(
+        os.path.join(script_dir, "weights/alpaca/"), device_map="auto", torch_dtype=torch.float32
+    )
+    alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(os.path.join(script_dir, "weights/alpaca/"))
 
-    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto", torch_dtype=torch.float32)
-    alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(os.path.join(script_dir,"weights/alpaca/"))
-
-    prompt = crossover_mutation(alpaca_model, alpaca_tokenizer, "A fantasy illustration of a <tag>", "A sci-fi diagram involving a <tag>")
-    print(prompt)
-
-    del alpaca_model, alpaca_tokenizer
-    torch.cuda.empty_cache()
-
-    dataset = ImageDataset("data/imagenet-a","classes.csv", clip_processor)
+    dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
     loader = DataLoader(test_samples, batch_size=1, shuffle=False, num_workers=1)
 
-    similarity = evaluate(loader, prompt, clip_model, clip_processor)
-    print(similarity)
-    
+    # Initial population of prompts
+    initial_population = [
+        "A photo of a <tag>.",
+        "An artistic rendering of a <tag>.",
+        "A close-up shot of a <tag>.",
+        "A diagram depicting a <tag>.",
+        "A <tag> in a natural setting.",
+        "A fantasy illustration of a <tag>.",
+        "A sci-fi diagram involving a <tag>.",
+        "An image of a small <tag>.",
+        "A realistic photo of a <tag>.",
+        "A digital artwork of a <tag>."
+    ]
+
+    # Run the genetic algorithm
+    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
+
+    print(f"Best Prompt: {best_prompt}")
+    print(f"Best Score: {best_score}")
