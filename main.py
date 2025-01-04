@@ -56,10 +56,11 @@ class ImageDataset(Dataset):
 def evaluate(loader, query, clip_model, clip_processor):
     similarity = 0
     for images, labels in tqdm(loader):
-        text_inputs = torch.stack([clip_processor(text=query.replace("<token>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
+        text_inputs = torch.stack([clip_processor(text=query.replace("<tag>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
         similarity += clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy()
         del images, text_inputs
         torch.cuda.empty_cache()
+    similarity = similarity / len(loader)
     return similarity
 
 def get_final_prompt(text):
@@ -73,7 +74,7 @@ def get_final_prompt(text):
             text = text[1:-1]
         return text
 
-def crossover(model, tokenizer, text1, text2):
+def crossover_mutation(model, tokenizer, text1, text2):
     first_device = next(model.parameters()).device
     request_content = template["standard"].replace("<prompt1>", text1).replace("<prompt2>", text2)
     inputs = tokenizer(request_content, return_tensors="pt").to(first_device)
@@ -91,7 +92,7 @@ if __name__ == "__main__":
     alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto", torch_dtype=torch.float32)
     alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(os.path.join(script_dir,"weights/alpaca/"))
 
-    prompt = crossover(alpaca_model, alpaca_tokenizer, "A fantasy illustration of a <tag>", "A sci-fi diagram involving a <tag>")
+    prompt = crossover_mutation(alpaca_model, alpaca_tokenizer, "A fantasy illustration of a <tag>", "A sci-fi diagram involving a <tag>")
     print(prompt)
 
     del alpaca_model, alpaca_tokenizer
