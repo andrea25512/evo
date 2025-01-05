@@ -169,11 +169,12 @@ if __name__ == "__main__":
     clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
     # Quantize alpaca
     quantization_config = BitsAndBytesConfig(load_in_8bit=True)
+    weights_dir = os.path.normpath(os.path.join(script_dir, "weights/alpaca/"))
     alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(
-        os.path.join(script_dir, "weights\\alpaca\\"), quantization_config=quantization_config,
+        weights_dir, quantization_config=quantization_config,
     )
-    print("Model directory: ", os.path.join(script_dir, "weights\\alpaca\\"))
-    alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(os.path.join(script_dir, "weights\\alpaca\\"))
+    print("Model directory: ", weights_dir)
+    alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
 
     dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
