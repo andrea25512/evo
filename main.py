@@ -110,12 +110,12 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
     population = initial_population
     best_prompt = None
     best_score = -float('inf')
-    
+
+    # Evaluate the fitness of the initial population
+    fitness_scores = [float(evaluate(loader, prompt, clip_model, clip_processor)) for prompt in population]
+
     for generation in range(generations):
         print(f"\n=== Generation {generation + 1}/{generations} ===")
-
-        # Evaluate population
-        fitness_scores = [float(evaluate(loader, prompt, clip_model, clip_processor)) for prompt in population]
 
         # Track the best prompt
         max_score = max(fitness_scores)
@@ -145,20 +145,21 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             child = crossover_mutation(model, tokenizer, parent1, parent2)
             new_population.append(child)
 
-        # Combine current population and new children
-        combined_population = population + new_population
-
-        # Re-evaluate combined population
-        combined_fitness_scores = [
-            float(evaluate(loader, prompt, clip_model, clip_processor)) for prompt in combined_population
+        # Compute fitness scores only for the new population
+        new_fitness_scores = [
+            float(evaluate(loader, prompt, clip_model, clip_processor)) for prompt in new_population
         ]
+
+        # Combine the old population and new children
+        combined_population = population + new_population
+        combined_fitness_scores = fitness_scores + new_fitness_scores
 
         # Sort by fitness scores and retain the top N individuals
         sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
         population = [combined_population[i] for i in sorted_indices[:pop_size]]
+        fitness_scores = [combined_fitness_scores[i] for i in sorted_indices[:pop_size]]
 
     return best_prompt, best_score
-
 
 
 if __name__ == "__main__":
