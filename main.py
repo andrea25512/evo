@@ -3,13 +3,15 @@ import os
 import random
 import pandas
 from tqdm import tqdm
-from transformers import CLIPProcessor, CLIPModel
+from transformers import CLIPProcessor, CLIPModel, BitsAndBytesConfig
 from PIL import Image
 from torch.utils.data import DataLoader, random_split
 import torch
 import transformers
+import numpy as np
+from pathlib import Path
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
+script_dir = os.path.abspath(os.path.dirname(__file__))
 device = "cuda:0"
 seed = 42
 test_images_number = 100
@@ -51,10 +53,25 @@ class ImageDataset(Dataset):
         return len(self.image_files)
 
     def __getitem__(self, index):
-        # Preprocess the image and fetch its label
-        image = self.processor(images=Image.open(self.image_files[index]).convert('RGB'), return_tensors="pt")['pixel_values'][0]
-        label = self.map[self.map.id == self.image_files[index].split("/")[-2]].description.item()
+        # Process the image
+        image = self.processor(
+            images=Image.open(self.image_files[index]).convert('RGB'),
+            return_tensors="pt"
+        )['pixel_values'][0]
+
+        # Extract and normalize the file ID
+        file_id = self.image_files[index].split("/")[-2].strip().lower()
+        self.map["id"] = self.map["id"].str.strip().str.lower()
+
+        # Find the matching description
+        matches = self.map[self.map.id == file_id]
+        if not matches.empty:
+            label = matches.description.iloc[0]
+        else:
+            label = "Unknown"  # Handle unmatched cases
+
         return (image, label)
+
 
 # Compute average similarity between images and caption templates
 def evaluate(loader, query, clip_model, clip_processor):
@@ -88,46 +105,61 @@ def crossover_mutation(model, tokenizer, text1, text2):
     output_text = tokenizer.batch_decode(out.cpu(), skip_special_tokens=True)[0]
     return get_final_prompt(output_text)
 
-# Tune prompt using GA
+# Tune prompts using GA
 def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=10):
-    # Initialize population
     population = initial_population
     best_prompt = None
     best_score = -float('inf')
     
     for generation in range(generations):
-        print(f"Generation {generation + 1}/{generations}")
-        
+        print(f"\n=== Generation {generation + 1}/{generations} ===")
+
         # Evaluate population
-        fitness_scores = []
-        for prompt in population:
-            score = evaluate(loader, prompt, clip_model, clip_processor)
-            fitness_scores.append(score)
-        
+        fitness_scores = [float(evaluate(loader, prompt, clip_model, clip_processor)) for prompt in population]
+
         # Track the best prompt
         max_score = max(fitness_scores)
         if max_score > best_score:
             best_score = max_score
             best_prompt = population[fitness_scores.index(max_score)]
-        
+
         print(f"Best Score in Generation {generation + 1}: {max_score}")
-        
-        # Selection (roulette wheel selection)
-        fitness_probs = [score / sum(fitness_scores) for score in fitness_scores]
-        selected_parents = [population[i] for i in torch.multinomial(torch.tensor(fitness_probs), num_samples=pop_size, replacement=True)]
-        
-        # Crossover and mutation
+
+        # Print the current population and fitness scores
+        print("Population and Fitness Scores:")
+        for i, (prompt, score) in enumerate(zip(population, fitness_scores)):
+            print(f"  {i + 1}. {prompt} -> Fitness: {score:.4f}")
+
+        # Selection using roulette wheel
+        fitness_probs = np.array([score / sum(fitness_scores) for score in fitness_scores], dtype=np.float32)
+        selected_parents = [
+            population[i.item()] for i in torch.multinomial(
+                torch.tensor(fitness_probs), num_samples=pop_size, replacement=True
+            )
+        ]
+
+        # Crossover and mutation to generate children
         new_population = []
-        for _ in range(pop_size // 2):
-            # Select two random parents
+        for _ in range(pop_size):
             parent1, parent2 = random.sample(selected_parents, 2)
             child = crossover_mutation(model, tokenizer, parent1, parent2)
             new_population.append(child)
-        
-        # Update population
-        population = new_population
+
+        # Combine current population and new children
+        combined_population = population + new_population
+
+        # Re-evaluate combined population
+        combined_fitness_scores = [
+            float(evaluate(loader, prompt, clip_model, clip_processor)) for prompt in combined_population
+        ]
+
+        # Sort by fitness scores and retain the top N individuals
+        sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
+        population = [combined_population[i] for i in sorted_indices[:pop_size]]
 
     return best_prompt, best_score
+
+
 
 if __name__ == "__main__":
     # Set up the models and dataset
@@ -135,10 +167,13 @@ if __name__ == "__main__":
 
     clip_model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14").to(device).eval()
     clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
+    # Quantize alpaca
+    quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(
-        os.path.join(script_dir, "weights/alpaca/"), device_map="auto", torch_dtype=torch.float32
+        os.path.join(script_dir, "weights\\alpaca\\"), quantization_config=quantization_config,
     )
-    alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(os.path.join(script_dir, "weights/alpaca/"))
+    print("Model directory: ", os.path.join(script_dir, "weights\\alpaca\\"))
+    alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(os.path.join(script_dir, "weights\\alpaca\\"))
 
     dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])

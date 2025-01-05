@@ -13,6 +13,11 @@
    pip install -r requirements.txt
    ```
 
+   On Windows, you also need to run:
+   ```bash
+   pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu124
+   ```
+
 3. Install `alpaca`:
    ```bash
    git clone https://github.com/tatsu-lab/stanford_alpaca.git
