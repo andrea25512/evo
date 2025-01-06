@@ -10,11 +10,17 @@ import torch
 import transformers
 import numpy as np
 from pathlib import Path
+import pandas
+import string
+import matplotlib.pyplot as plt
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
 device = "cuda:0"
 seed = 42
 test_images_number = 100
+os.environ["TOKENIZERS_PARALLELISM"] = "true"
+seen_words = []
+
 
 template = { 
     "standard": """
@@ -74,15 +80,45 @@ class ImageDataset(Dataset):
 
 
 # Compute average similarity between images and caption templates
-def evaluate(loader, query, clip_model, clip_processor):
+def get_fitness(loader, prompt, clip_model, clip_processor):
     similarity = 0
-    for images, labels in tqdm(loader):
-        text_inputs = torch.stack([clip_processor(text=query.replace("<tag>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
+    for images, labels in loader:
+        text_inputs = torch.stack([clip_processor(text=prompt.replace("<tag>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
         similarity += clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy()
         del images, text_inputs
         torch.cuda.empty_cache()
-    similarity = similarity / len(loader)
+    similarity = similarity[0] / len(loader)
+    
     return similarity
+
+def evaluate(loader, population, clip_model, clip_processor, timestamp, last_average_lenght):
+    fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(population, desc="Evaluation")]
+    best_fitness = np.max(fitness_scores)
+    average_fitness = np.average(fitness_scores)
+    worst_fitness = np.min(fitness_scores)
+    average_lenght = np.average([len(prompt) for prompt in population])
+    variance_lenght = last_average_lenght - average_lenght
+    last_average_lenght = average_lenght
+    added_word = 0
+    for prompt in population:
+        for word in prompt.split(" "):
+            word = word.strip().lower().translate(str.maketrans('', '', string.punctuation))
+            if(word not in seen_words):
+                added_word += 1
+                seen_words.append(word)
+
+    tab_metrics = pandas.DataFrame({
+        'timestamp': [timestamp],
+        'best_fitness': [best_fitness],
+        'average_fitness': [average_fitness],
+        'worst_fitness': [worst_fitness],
+        'average_lenght': [average_lenght],
+        'variance_lenght': [variance_lenght],
+        'added_word': [added_word]
+    })
+    tab_metrics.to_csv(os.path.join(script_dir, "run_recap.csv"), mode='a', header=False, index=False)
+
+    return (fitness_scores, last_average_lenght)
 
 # Extract the final prompt wrapped in <prompt> tags
 def get_final_prompt(text):
@@ -106,16 +142,17 @@ def crossover_mutation(model, tokenizer, text1, text2):
     return get_final_prompt(output_text)
 
 # Tune prompts using GA
-def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=10):
+def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=10, children_number=20):
+    last_average_lenght = 0
     population = initial_population
     best_prompt = None
     best_score = -float('inf')
 
     # Evaluate the fitness of the initial population
-    fitness_scores = [float(evaluate(loader, prompt, clip_model, clip_processor)) for prompt in population]
+    (fitness_scores, last_average_lenght) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_lenght)
 
     for generation in range(generations):
-        print(f"\n=== Generation {generation + 1}/{generations} ===")
+        print(f"=== Generation {generation + 1}/{generations} ===")
 
         # Track the best prompt
         max_score = max(fitness_scores)
@@ -129,35 +166,34 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
         print("Population and Fitness Scores:")
         for i, (prompt, score) in enumerate(zip(population, fitness_scores)):
             print(f"  {i + 1}. {prompt} -> Fitness: {score:.4f}")
+        print("\n")
 
-        # Selection using roulette wheel
-        fitness_probs = np.array([score / sum(fitness_scores) for score in fitness_scores], dtype=np.float32)
-        selected_parents = [
-            population[i.item()] for i in torch.multinomial(
-                torch.tensor(fitness_probs), num_samples=pop_size, replacement=True
-            )
-        ]
+        if(not generation + 1 == generations):
+            # Selection using roulette wheel
+            fitness_probs = np.array([score / sum(fitness_scores) for score in fitness_scores], dtype=np.float32)
+            selected_parents = [
+                population[i.item()] for i in torch.multinomial(
+                    torch.tensor(fitness_probs), num_samples=children_number, replacement=True
+                )
+            ]
+            # Crossover and mutation to generate children
+            new_population = []
+            for _ in tqdm(range(children_number), desc="Generation"):
+                parent1, parent2 = random.sample(selected_parents, 2)
+                child = crossover_mutation(model, tokenizer, parent1, parent2)
+                new_population.append(child)
 
-        # Crossover and mutation to generate children
-        new_population = []
-        for _ in range(pop_size):
-            parent1, parent2 = random.sample(selected_parents, 2)
-            child = crossover_mutation(model, tokenizer, parent1, parent2)
-            new_population.append(child)
+            # Compute fitness scores only for the new population
+            (new_fitness_scores, last_average_lenght) = evaluate(loader, new_population, clip_model, clip_processor, generation + 1, last_average_lenght)
 
-        # Compute fitness scores only for the new population
-        new_fitness_scores = [
-            float(evaluate(loader, prompt, clip_model, clip_processor)) for prompt in new_population
-        ]
+            # Combine the old population and new children
+            combined_population = population + new_population
+            combined_fitness_scores = fitness_scores + new_fitness_scores
 
-        # Combine the old population and new children
-        combined_population = population + new_population
-        combined_fitness_scores = fitness_scores + new_fitness_scores
-
-        # Sort by fitness scores and retain the top N individuals
-        sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
-        population = [combined_population[i] for i in sorted_indices[:pop_size]]
-        fitness_scores = [combined_fitness_scores[i] for i in sorted_indices[:pop_size]]
+            # Sort by fitness scores and retain the top N individuals
+            sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
+            population = [combined_population[i] for i in sorted_indices[:pop_size]]
+            fitness_scores = [combined_fitness_scores[i] for i in sorted_indices[:pop_size]]
 
     return best_prompt, best_score
 
@@ -171,9 +207,8 @@ if __name__ == "__main__":
     # Quantize alpaca
     quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     weights_dir = os.path.normpath(os.path.join(script_dir, "weights/alpaca/"))
-    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(
-        weights_dir, quantization_config=quantization_config,
-    )
+    #alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(weights_dir, quantization_config=quantization_config)
+    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto")
     print("Model directory: ", weights_dir)
     alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
 
@@ -183,7 +218,7 @@ if __name__ == "__main__":
 
     # Initial population of prompts
     initial_population = [
-        "A photo of a <tag>.",
+        # "A photo of a <tag>.",
         "An artistic rendering of a <tag>.",
         "A close-up shot of a <tag>.",
         "A diagram depicting a <tag>.",
@@ -191,7 +226,7 @@ if __name__ == "__main__":
         "A fantasy illustration of a <tag>.",
         "A sci-fi diagram involving a <tag>.",
         "An image of a small <tag>.",
-        "A realistic photo of a <tag>.",
+        "A realistic photo of a <tag>."
         "A digital artwork of a <tag>."
     ]
 
@@ -200,3 +235,56 @@ if __name__ == "__main__":
 
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
+
+    data = pandas.read_csv(os.path.join(script_dir, "run_recap.csv"), header=None)
+
+    # Assign column names based on the description
+    data.columns = ["timestamp", "best_fitness", "average_fitness", "worst_fitness", "average_length", "variance_length", "added_word"]
+
+    # Create a 2x2 grid for the plots
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+    # Plot 1: Variation in time of best, average, and worst fitness
+    axes[0, 0].plot(data["timestamp"], data["best_fitness"], label="Best Fitness")
+    axes[0, 0].plot(data["timestamp"], data["average_fitness"], label="Average Fitness")
+    axes[0, 0].plot(data["timestamp"], data["worst_fitness"], label="Worst Fitness")
+    axes[0, 0].set_xlabel("Timestamp")
+    axes[0, 0].set_ylabel("Fitness")
+    axes[0, 0].set_title("Fitness Variation Over Time")
+    axes[0, 0].legend()
+    axes[0, 0].grid()
+
+    # Plot 2: Variation in time of average length
+    axes[0, 1].plot(data["timestamp"], data["average_length"], label="Average Length", color="orange")
+    axes[0, 1].set_xlabel("Timestamp")
+    axes[0, 1].set_ylabel("Average Length")
+    axes[0, 1].set_title("Average Length Over Time")
+    axes[0, 1].grid()
+
+    # Plot 3: Variation in time of variance length
+    axes[1, 0].plot(data["timestamp"], data["variance_length"], label="Variance Length", color="green")
+    axes[1, 0].set_xlabel("Timestamp")
+    axes[1, 0].set_ylabel("Variance Length")
+    axes[1, 0].set_title("Variance Length Over Time")
+    axes[1, 0].grid()
+
+    # Plot 4: Variation in time of added words
+    axes[1, 1].plot(data["timestamp"], data["added_word"], label="Added Words", color="red")
+    axes[1, 1].set_xlabel("Timestamp")
+    axes[1, 1].set_ylabel("Added Words")
+    axes[1, 1].set_title("Added Words Over Time")
+    axes[1, 1].grid()
+
+    # Save the combined figure
+    plt.savefig(os.path.join(script_dir, "combined_graphs.png"))
+    
+    # Delete the CSV file
+    script_dir = os.path.join(script_dir, "run_recap.csv")
+    try:
+        os.remove(script_dir)
+        print(f"CSV file '{script_dir}' deleted successfully.")
+    except FileNotFoundError:
+        print(f"CSV file '{script_dir}' not found, so it could not be deleted.")
+    except Exception as e:
+        print(f"An error occurred while deleting the file: {e}")
+    
