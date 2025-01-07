@@ -13,6 +13,7 @@ from pathlib import Path
 import pandas
 import string
 import matplotlib.pyplot as plt
+import random
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
 device = "cuda:0"
@@ -141,6 +142,52 @@ def crossover_mutation(model, tokenizer, text1, text2):
     output_text = tokenizer.batch_decode(out.cpu(), skip_special_tokens=True)[0]
     return get_final_prompt(output_text)
 
+def roulette_wheel_selection(fitness_scores, population, children_number):
+    # selection using roulette wheel
+    fitness_probs = np.array([score / sum(fitness_scores) for score in fitness_scores], dtype=np.float32)
+    selected_parents = [
+        population[i.item()] for i in torch.multinomial(
+            torch.tensor(fitness_probs), num_samples=children_number, replacement=True
+        )
+    ]
+    return selected_parents
+
+def tournament_selection(fitness_scores, population, children_number, tournament_size):
+    selected_parents = []
+    for _ in range(children_number):
+        # randomly select `tournament_size` individuals from the population
+        tournament_indices = np.random.choice(len(population), tournament_size, replace=False)
+        tournament_individuals = [population[i] for i in tournament_indices]
+        tournament_fitness = [fitness_scores[i] for i in tournament_indices]
+
+        # Select the individual with the highest fitness
+        best_individual_index = np.argmax(tournament_fitness)
+        selected_parents.append(tournament_individuals[best_individual_index])
+
+    return selected_parents
+
+def rank_selection(fitness_scores, population, children_number):
+    # Rank individuals based on their fitness scores
+    # Negative sign for descending order
+    sorted_indices = np.argsort(-np.array(fitness_scores))  
+    ranked_population = [population[i] for i in sorted_indices]
+    
+    # Assign ranks (highest fitness gets highest rank)
+    ranks = np.arange(len(fitness_scores), 0, -1)
+
+    # Assign probabilities proportional to ranks
+    rank_sum = sum(ranks)
+    rank_probs = np.array([rank / rank_sum for rank in ranks], dtype=np.float32)
+
+    # Use roulette wheel or similar selection method
+    selected_parents = [
+        ranked_population[i.item()] for i in torch.multinomial(
+            torch.tensor(rank_probs), num_samples=children_number, replacement=True
+        )
+    ]
+
+    return selected_parents
+
 # Tune prompts using GA
 def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=10, children_number=20):
     last_average_lenght = 0
@@ -169,13 +216,10 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
         print("\n")
 
         if(not generation + 1 == generations):
-            # Selection using roulette wheel
-            fitness_probs = np.array([score / sum(fitness_scores) for score in fitness_scores], dtype=np.float32)
-            selected_parents = [
-                population[i.item()] for i in torch.multinomial(
-                    torch.tensor(fitness_probs), num_samples=children_number, replacement=True
-                )
-            ]
+            #selected_parents = roulette_wheel_selection(fitness_scores, population, children_number)
+            #selected_parents = tournament_selection(fitness_scores, population, children_number, 2)
+            selected_parents = rank_selection(fitness_scores, population, children_number)
+
             # Crossover and mutation to generate children
             new_population = []
             for _ in tqdm(range(children_number), desc="Generation"):
@@ -201,6 +245,8 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
 if __name__ == "__main__":
     # Set up the models and dataset
     torch.manual_seed(seed)
+    random.seed(seed)
+    np.random.seed(seed)
 
     clip_model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14").to(device).eval()
     clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
@@ -218,87 +264,90 @@ if __name__ == "__main__":
 
     # Initial population of prompts
     initial_population = [
-        'a bad photo of a {}.',
-        'a photo of many {}.',
-        'a sculpture of a {}.',
-        'a photo of the hard to see {}.',
-        'a low resolution photo of the {}.',
-        'a rendering of a {}.',
-        'graffiti of a {}.',
-        'a bad photo of the {}.',
-        'a cropped photo of the {}.',
-        'a tattoo of a {}.',
-        'the embroidered {}.',
-        'a photo of a hard to see {}.',
-        'a bright photo of a {}.',
-        'a photo of a clean {}.',
-        'a photo of a dirty {}.',
-        'a dark photo of the {}.',
-        'a drawing of a {}.',
-        'a photo of my {}.',
-        'the plastic {}.',
-        'a photo of the cool {}.',
-        'a close-up photo of a {}.',
-        'a black and white photo of the {}.',
-        'a painting of the {}.',
-        'a painting of a {}.',
-        'a pixelated photo of the {}.',
-        'a sculpture of the {}.',
-        'a bright photo of the {}.',
-        'a cropped photo of a {}.',
-        'a plastic {}.',
-        'a photo of the dirty {}.',
-        'a jpeg corrupted photo of a {}.',
-        'a blurry photo of the {}.',
-        'a photo of the {}.',
-        'a good photo of the {}.',
-        'a rendering of the {}.',
-        'a {} in a video game.',
-        'a photo of one {}.',
-        'a doodle of a {}.',
-        'a close-up photo of the {}.',
-        'a photo of a {}.',
-        'the origami {}.',
-        'the {} in a video game.',
-        'a sketch of a {}.',
-        'a doodle of the {}.',
-        'a origami {}.',
-        'a low resolution photo of a {}.',
-        'the toy {}.',
-        'a rendition of the {}.',
-        'a photo of the clean {}.',
-        'a photo of a large {}.',
-        'a rendition of a {}.',
-        'a photo of a nice {}.',
-        'a photo of a weird {}.',
-        'a blurry photo of a {}.',
-        'a cartoon {}.',
-        'art of a {}.',
-        'a sketch of the {}.',
-        'a embroidered {}.',
-        'a pixelated photo of a {}.',
-        'itap of the {}.',
-        'a jpeg corrupted photo of the {}.',
-        'a good photo of a {}.',
-        'a plushie {}.',
-        'a photo of the nice {}.',
-        'a photo of the small {}.',
-        'a photo of the weird {}.',
-        'the cartoon {}.',
-        'art of the {}.',
-        'a drawing of the {}.',
-        'a photo of the large {}.',
-        'a black and white photo of a {}.',
-        'the plushie {}.',
-        'a dark photo of a {}.',
-        'itap of a {}.',
-        'graffiti of the {}.',
-        'a toy {}.',
-        'itap of my {}.',
-        'a photo of a cool {}.',
-        'a photo of a small {}.',
-        'a tattoo of the {}.',
+        'a bad photo of a <tag>.',
+        'a photo of many <tag>.',
+        'a sculpture of a <tag>.',
+        'a photo of the hard to see <tag>.',
+        'a low resolution photo of the <tag>.',
+        'a rendering of a <tag>.',
+        'graffiti of a <tag>.',
+        'a bad photo of the <tag>.',
+        'a cropped photo of the <tag>.',
+        'a tattoo of a <tag>.',
+        'the embroidered <tag>.',
+        'a photo of a hard to see <tag>.',
+        'a bright photo of a <tag>.',
+        'a photo of a clean <tag>.',
+        'a photo of a dirty <tag>.',
+        'a dark photo of the <tag>.',
+        'a drawing of a <tag>.',
+        'a photo of my <tag>.',
+        'the plastic <tag>.',
+        'a photo of the cool <tag>.',
+        'a close-up photo of a <tag>.',
+        'a black and white photo of the <tag>.',
+        'a painting of the <tag>.',
+        'a painting of a <tag>.',
+        'a pixelated photo of the <tag>.',
+        'a sculpture of the <tag>.',
+        'a bright photo of the <tag>.',
+        'a cropped photo of a <tag>.',
+        'a plastic <tag>.',
+        'a photo of the dirty <tag>.',
+        'a jpeg corrupted photo of a <tag>.',
+        'a blurry photo of the <tag>.',
+        'a photo of the <tag>.',
+        'a good photo of the <tag>.',
+        'a rendering of the <tag>.',
+        'a <tag> in a video game.',
+        'a photo of one <tag>.',
+        'a doodle of a <tag>.',
+        'a close-up photo of the <tag>.',
+        'a photo of a <tag>.',
+        'the origami <tag>.',
+        'the <tag> in a video game.',
+        'a sketch of a <tag>.',
+        'a doodle of the <tag>.',
+        'a origami <tag>.',
+        'a low resolution photo of a <tag>.',
+        'the toy <tag>.',
+        'a rendition of the <tag>.',
+        'a photo of the clean <tag>.',
+        'a photo of a large <tag>.',
+        'a rendition of a <tag>.',
+        'a photo of a nice <tag>.',
+        'a photo of a weird <tag>.',
+        'a blurry photo of a <tag>.',
+        'a cartoon <tag>.',
+        'art of a <tag>.',
+        'a sketch of the <tag>.',
+        'a embroidered <tag>.',
+        'a pixelated photo of a <tag>.',
+        'itap of the <tag>.',
+        'a jpeg corrupted photo of the <tag>.',
+        'a good photo of a <tag>.',
+        'a plushie <tag>.',
+        'a photo of the nice <tag>.',
+        'a photo of the small <tag>.',
+        'a photo of the weird <tag>.',
+        'the cartoon <tag>.',
+        'art of the <tag>.',
+        'a drawing of the <tag>.',
+        'a photo of the large <tag>.',
+        'a black and white photo of a <tag>.',
+        'the plushie <tag>.',
+        'a dark photo of a <tag>.',
+        'itap of a <tag>.',
+        'graffiti of the <tag>.',
+        'a toy <tag>.',
+        'itap of my <tag>.',
+        'a photo of a cool <tag>.',
+        'a photo of a small <tag>.',
+        'a tattoo of the <tag>.',
     ]
+
+    initial_population = random.choices(initial_population, k=10)
+    print(initial_population)
 
     # Run the genetic algorithm
     best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
