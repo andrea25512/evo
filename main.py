@@ -97,7 +97,7 @@ def evaluate(loader, population, clip_model, clip_processor, timestamp, last_ave
     average_fitness = np.average(fitness_scores)
     worst_fitness = np.min(fitness_scores)
     average_lenght = np.average([len(prompt) for prompt in population])
-    variance_lenght = last_average_lenght - average_lenght
+    variance_lenght = average_lenght - last_average_lenght
     last_average_lenght = average_lenght
     added_word = 0
     for prompt in population:
@@ -277,14 +277,3 @@ if __name__ == "__main__":
 
     # Save the combined figure
     plt.savefig(os.path.join(script_dir, "combined_graphs.png"))
-    
-    # Delete the CSV file
-    script_dir = os.path.join(script_dir, "run_recap.csv")
-    try:
-        os.remove(script_dir)
-        print(f"CSV file '{script_dir}' deleted successfully.")
-    except FileNotFoundError:
-        print(f"CSV file '{script_dir}' not found, so it could not be deleted.")
-    except Exception as e:
-        print(f"An error occurred while deleting the file: {e}")
-    
