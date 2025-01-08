@@ -79,21 +79,21 @@ class ImageDataset(Dataset):
 
         return (image, label)
 
-
 # Compute average similarity between images and caption templates
 def get_fitness(loader, prompt, clip_model, clip_processor):
     similarity = 0
     for images, labels in loader:
         text_inputs = clip_processor(text=[prompt.replace("<tag>", label) for label in labels], return_tensors="pt", padding=True)['input_ids']
-        similarity += np.sum(clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy())
+        similarity += np.sum(clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image.cpu().detach().numpy())
         del images, text_inputs
         torch.cuda.empty_cache()
-    similarity = similarity / len(loader)
+    similarity = similarity / test_images_number
     
     return similarity
 
-def evaluate(loader, population, clip_model, clip_processor, timestamp, last_average_lenght):
+def evaluate(loader, population, clip_model, clip_processor, timestamp, last_average_lenght, file_name):
     fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(population, desc="Evaluation")]
+    print(fitness_scores)
     best_fitness = np.max(fitness_scores)
     average_fitness = np.average(fitness_scores)
     worst_fitness = np.min(fitness_scores)
@@ -117,7 +117,7 @@ def evaluate(loader, population, clip_model, clip_processor, timestamp, last_ave
         'variance_lenght': [variance_lenght],
         'added_word': [added_word]
     })
-    tab_metrics.to_csv(os.path.join(script_dir, "run_recap.csv"), mode='a', header=False, index=False)
+    tab_metrics.to_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), mode='a', header=False, index=False)
 
     return (fitness_scores, last_average_lenght)
 
@@ -189,14 +189,14 @@ def rank_selection(fitness_scores, population, children_number):
     return selected_parents
 
 # Tune prompts using GA
-def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=50, children_number=100, selection_index=0):
+def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=50, children_number=100, selection_index=0, file_name="TEST"):
     last_average_lenght = 0
     population = initial_population
     best_prompt = None
     best_score = -float('inf')
 
     # Evaluate the fitness of the initial population
-    (fitness_scores, last_average_lenght) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_lenght)
+    (fitness_scores, last_average_lenght) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_lenght, file_name)
 
     for generation in range(generations):
         print(f"=== Generation {generation + 1}/{generations} ===")
@@ -233,7 +233,7 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
                 new_population.append(child)
 
             # Compute fitness scores only for the new population
-            (new_fitness_scores, last_average_lenght) = evaluate(loader, new_population, clip_model, clip_processor, generation + 1, last_average_lenght)
+            (new_fitness_scores, last_average_lenght) = evaluate(loader, new_population, clip_model, clip_processor, generation + 1, last_average_lenght, file_name)
 
             # Combine the old population and new children
             combined_population = population + new_population
@@ -253,18 +253,18 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--children', type=int, help='Children amount', default=20)
     parser.add_argument('-g', '--generations', type=int, help='Generation amount', default=10)
     parser.add_argument('-s', '--selection', type=int, help='Selection index', default=0)
+    parser.add_argument('-r', '--replacement', type=int, help='Replacement index', default=0) # zero fixed for now as only elitism is avelable
 
-    args = parser.parse_args()
+    args = vars(parser.parse_args())
 
     generations = args['generations']
     pop_size = args['population']
     child_size = args['children']
     selection_index = args['selection']
-
-    print(f"Population amount: {generations}")
-    print(f"Children amount: {pop_size}")
-    print(f"Generation amount: {child_size}")
-    print(f"Selection index: {selection_index}")
+    replacement_index = args['replacement']
+    
+    file_name = f"generations_{generations}_population_{pop_size}_children_{child_size}_selection_{selection_index}_replacement_{replacement_index}"
+    print(f"Output file name: {file_name}")
 
     # Set up the models and dataset
     torch.manual_seed(seed)
@@ -283,7 +283,8 @@ if __name__ == "__main__":
 
     dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
-    loader = DataLoader(test_samples, batch_size=8, shuffle=False, num_workers=8)
+    # LEAVE THE BATCH SIZE AND NUMBER OF WORKERS TO 1!!!!!!!!!!!
+    loader = DataLoader(test_samples, batch_size=1, shuffle=False, num_workers=1)
 
     # Initial population of prompts
     initial_population = [
@@ -372,7 +373,7 @@ if __name__ == "__main__":
     initial_population = random.sample(initial_population, k=pop_size)
 
     # Run the genetic algorithm
-    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size, selection_index)
+    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size, selection_index, file_name)
 
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
@@ -417,4 +418,4 @@ if __name__ == "__main__":
     axes[1, 1].grid()
 
     # Save the combined figure
-    plt.savefig(os.path.join(script_dir, "combined_graphs.png"))
+    plt.savefig(os.path.join(script_dir, f"images/{file_name}.png"))

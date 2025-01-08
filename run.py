@@ -3,8 +3,15 @@ import re
 
 # Define parameter combinations
 configs = [
-    " --layers 3 --device cuda:1 --version long --coco --N 10 --learning_rate 0.00005",
-    " --layers 3 --device cuda:1 --version long --coco --N 10 --learning_rate 0.00001"
+    "--generations 10 --population 10 --children 10 --selection 0",
+    "--generations 10 --population 10 --children 10 --selection 1",
+    "--generations 10 --population 10 --children 10 --selection 2",
+    "--generations 10 --population 10 --children 20 --selection 0",
+    "--generations 10 --population 10 --children 20 --selection 1",
+    "--generations 10 --population 10 --children 20 --selection 2",
+    "--generations 10 --population 50 --children 100 --selection 0",
+    "--generations 10 --population 50 --children 100 --selection 1",
+    "--generations 10 --population 50 --children 100 --selection 2"
 ]
 
 # Iterate over each configuration and execute the script sequentially
