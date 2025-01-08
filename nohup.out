@@ -1,0 +1,18 @@
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards:  17%|█▋        | 1/6 [00:00<00:02,  2.23it/s]Loading checkpoint shards:  33%|███▎      | 2/6 [00:00<00:01,  2.22it/s]Loading checkpoint shards:  50%|█████     | 3/6 [00:01<00:01,  1.98it/s]Loading checkpoint shards:  67%|██████▋   | 4/6 [00:02<00:01,  1.50it/s]Loading checkpoint shards:  83%|████████▎ | 5/6 [00:03<00:00,  1.35it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:03<00:00,  1.52it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:03<00:00,  1.60it/s]
+Model directory:  /home/andrea.ceron/evo/weights/alpaca
+['a photo of a nice <tag>.', 'a sculpture of a <tag>.', 'a painting of the <tag>.', 'a photo of my <tag>.', 'a pixelated photo of a <tag>.', 'a cartoon <tag>.', 'the plushie <tag>.', 'graffiti of a <tag>.', 'a good photo of the <tag>.', 'a sculpture of a <tag>.']
+Evaluation:   0%|          | 0/10 [00:00<?, ?it/s]Evaluation:  10%|█         | 1/10 [00:02<00:20,  2.29s/it]Evaluation:  20%|██        | 2/10 [00:04<00:17,  2.25s/it]Evaluation:  30%|███       | 3/10 [00:06<00:15,  2.21s/it]Evaluation:  30%|███       | 3/10 [00:06<00:15,  2.25s/it]
+Traceback (most recent call last):
+  File "/home/andrea.ceron/evo/main.py", line 353, in <module>
+    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andrea.ceron/evo/main.py", line 199, in ga_run
+    (fitness_scores, last_average_lenght) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_lenght)
+                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andrea.ceron/evo/main.py", line 96, in evaluate
+    fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(population, desc="Evaluation")]
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andrea.ceron/evo/main.py", line 88, in get_fitness
+    similarity += clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy()
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
