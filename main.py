@@ -91,12 +91,11 @@ class ImageDataset(Dataset):
 def get_fitness(loader, prompt, clip_model, clip_processor):
     similarity = 0
     for images, labels in loader:
-        print([clip_processor(text=prompt.replace("<tag>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
-        text_inputs = torch.stack([clip_processor(text=prompt.replace("<tag>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
-        similarity += clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy()
+        text_inputs = clip_processor(text=[prompt.replace("<tag>", label) for label in labels], return_tensors="pt", padding=True)['input_ids']
+        similarity += np.sum(clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy())
         del images, text_inputs
         torch.cuda.empty_cache()
-    similarity = similarity[0] / len(loader)
+    similarity = similarity / len(loader)
     
     return similarity
 
