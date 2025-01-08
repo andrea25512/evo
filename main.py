@@ -22,6 +22,13 @@ test_images_number = 100
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 seen_words = []
 
+#----------------------------------------------------------------------------------------------------------------------------------------------------
+
+generations = 10
+pop_size = 50
+child_size = 100
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------
 
 template = { 
     "standard": """
@@ -84,6 +91,7 @@ class ImageDataset(Dataset):
 def get_fitness(loader, prompt, clip_model, clip_processor):
     similarity = 0
     for images, labels in loader:
+        print([clip_processor(text=prompt.replace("<tag>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
         text_inputs = torch.stack([clip_processor(text=prompt.replace("<tag>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
         similarity += clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy()
         del images, text_inputs
@@ -189,7 +197,7 @@ def rank_selection(fitness_scores, population, children_number):
     return selected_parents
 
 # Tune prompts using GA
-def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=10, children_number=20):
+def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=50, children_number=100):
     last_average_lenght = 0
     population = initial_population
     best_prompt = None
@@ -260,7 +268,7 @@ if __name__ == "__main__":
 
     dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
-    loader = DataLoader(test_samples, batch_size=1, shuffle=False, num_workers=1)
+    loader = DataLoader(test_samples, batch_size=8, shuffle=False, num_workers=8)
 
     # Initial population of prompts
     initial_population = [
@@ -346,11 +354,11 @@ if __name__ == "__main__":
         'a tattoo of the <tag>.',
     ]
 
-    initial_population = random.choices(initial_population, k=10)
+    initial_population = random.sample(initial_population, k=pop_size)
     print(initial_population)
 
     # Run the genetic algorithm
-    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
+    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size)
 
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")

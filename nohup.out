@@ -1,18 +1,19 @@
-Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards:  17%|█▋        | 1/6 [00:00<00:02,  2.23it/s]Loading checkpoint shards:  33%|███▎      | 2/6 [00:00<00:01,  2.22it/s]Loading checkpoint shards:  50%|█████     | 3/6 [00:01<00:01,  1.98it/s]Loading checkpoint shards:  67%|██████▋   | 4/6 [00:02<00:01,  1.50it/s]Loading checkpoint shards:  83%|████████▎ | 5/6 [00:03<00:00,  1.35it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:03<00:00,  1.52it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:03<00:00,  1.60it/s]
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]Loading checkpoint shards:  17%|█▋        | 1/6 [00:01<00:08,  1.75s/it]Loading checkpoint shards:  33%|███▎      | 2/6 [00:03<00:06,  1.69s/it]Loading checkpoint shards:  50%|█████     | 3/6 [00:05<00:05,  1.76s/it]Loading checkpoint shards:  67%|██████▋   | 4/6 [00:06<00:03,  1.59s/it]Loading checkpoint shards: 100%|██████████| 6/6 [00:06<00:00,  1.29it/s]Loading checkpoint shards: 100%|██████████| 6/6 [00:06<00:00,  1.11s/it]
+Some parameters are on the meta device because they were offloaded to the cpu.
 Model directory:  /home/andrea.ceron/evo/weights/alpaca
-['a photo of a nice <tag>.', 'a sculpture of a <tag>.', 'a painting of the <tag>.', 'a photo of my <tag>.', 'a pixelated photo of a <tag>.', 'a cartoon <tag>.', 'the plushie <tag>.', 'graffiti of a <tag>.', 'a good photo of the <tag>.', 'a sculpture of a <tag>.']
-Evaluation:   0%|          | 0/10 [00:00<?, ?it/s]Evaluation:  10%|█         | 1/10 [00:02<00:20,  2.29s/it]Evaluation:  20%|██        | 2/10 [00:04<00:17,  2.25s/it]Evaluation:  30%|███       | 3/10 [00:06<00:15,  2.21s/it]Evaluation:  30%|███       | 3/10 [00:06<00:15,  2.25s/it]
+['a photo of a dirty <tag>.', 'a photo of the hard to see <tag>.', 'a <tag> in a video game.', 'a blurry photo of the <tag>.', 'a plastic <tag>.', 'a photo of my <tag>.', 'a photo of a clean <tag>.', 'a photo of the large <tag>.', 'a photo of a hard to see <tag>.', 'a cartoon <tag>.', 'a low resolution photo of the <tag>.', 'a photo of a small <tag>.', 'the plushie <tag>.', 'a cropped photo of a <tag>.', 'a photo of the dirty <tag>.', 'a photo of the small <tag>.', 'a drawing of the <tag>.', 'a photo of a cool <tag>.', 'a bright photo of a <tag>.', 'a low resolution photo of a <tag>.', 'the <tag> in a video game.', 'a origami <tag>.', 'a rendering of the <tag>.', 'a bright photo of the <tag>.', 'a tattoo of the <tag>.', 'a toy <tag>.', 'a doodle of a <tag>.', 'graffiti of the <tag>.', 'a photo of a nice <tag>.', 'a bad photo of a <tag>.', 'a photo of the clean <tag>.', 'the embroidered <tag>.', 'a pixelated photo of a <tag>.', 'the cartoon <tag>.', 'a black and white photo of the <tag>.', 'a photo of a weird <tag>.', 'a tattoo of a <tag>.', 'itap of a <tag>.', 'a jpeg corrupted photo of the <tag>.', 'graffiti of a <tag>.', 'a rendering of a <tag>.', 'a pixelated photo of the <tag>.', 'the origami <tag>.', 'a painting of the <tag>.', 'a photo of one <tag>.', 'a drawing of a <tag>.', 'a sculpture of a <tag>.', 'a photo of the weird <tag>.', 'a bad photo of the <tag>.', 'a photo of the <tag>.']
+Evaluation:   0%|          | 0/50 [00:00<?, ?it/s]Evaluation:   0%|          | 0/50 [00:00<?, ?it/s]
 Traceback (most recent call last):
-  File "/home/andrea.ceron/evo/main.py", line 353, in <module>
-    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
-                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/andrea.ceron/evo/main.py", line 199, in ga_run
+  File "/home/andrea.ceron/evo/main.py", line 360, in <module>
+    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andrea.ceron/evo/main.py", line 206, in ga_run
     (fitness_scores, last_average_lenght) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_lenght)
                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/andrea.ceron/evo/main.py", line 96, in evaluate
+  File "/home/andrea.ceron/evo/main.py", line 103, in evaluate
     fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(population, desc="Evaluation")]
                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/andrea.ceron/evo/main.py", line 88, in get_fitness
-    similarity += clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy()
-                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-KeyboardInterrupt
+  File "/home/andrea.ceron/evo/main.py", line 94, in get_fitness
+    text_inputs = torch.stack([clip_processor(text=prompt.replace("<tag>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: stack expects each tensor to be equal size, but got [10] at entry 0 and [9] at entry 1
