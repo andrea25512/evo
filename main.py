@@ -79,6 +79,9 @@ class ImageDataset(Dataset):
 
         return (image, label)
 
+# ====================================================
+# SECTION: Utility functions
+# ====================================================
 
 # Compute average similarity between images and caption templates
 def get_fitness(loader, prompt, clip_model, clip_processor):
@@ -133,15 +136,6 @@ def get_final_prompt(text):
             text = text[1:-1]
         return text
 
-# Generate a new prompt by combining two templates via an LLM
-def crossover_mutation(model, tokenizer, text1, text2):
-    first_device = next(model.parameters()).device
-    request_content = template["standard"].replace("<prompt1>", text1).replace("<prompt2>", text2)
-    inputs = tokenizer(request_content, return_tensors="pt").to(first_device)
-    out = model.generate(inputs=inputs.input_ids, max_new_tokens=100)
-    output_text = tokenizer.batch_decode(out.cpu(), skip_special_tokens=True)[0]
-    return get_final_prompt(output_text)
-
 def load_fitness_scores(file_path, to_numpy_float32=False):
     if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
         with open(file_path, "r") as f:
@@ -158,6 +152,22 @@ def save_fitness_scores(file_path, fitness_scores):
     with open(file_path, "w") as f:
         json.dump(fitness_scores, f)
 
+# ====================================================
+# SECTION: Genetic operators
+# ====================================================
+
+# Generate a new prompt by combining two templates via an LLM
+def crossover_mutation(model, tokenizer, text1, text2):
+    first_device = next(model.parameters()).device
+    request_content = template["standard"].replace("<prompt1>", text1).replace("<prompt2>", text2)
+    inputs = tokenizer(request_content, return_tensors="pt").to(first_device)
+    out = model.generate(inputs=inputs.input_ids, max_new_tokens=100)
+    output_text = tokenizer.batch_decode(out.cpu(), skip_special_tokens=True)[0]
+    return get_final_prompt(output_text)
+
+# ====================================================
+# SECTION: Parent selection strategies
+# ====================================================
 
 def roulette_wheel_selection(fitness_scores, population, children_number):
     # selection using roulette wheel
@@ -205,10 +215,38 @@ def rank_selection(fitness_scores, population, children_number):
 
     return selected_parents
 
+# Select N best individuals
+def truncated_rank_selection(fitness_scores, population, children_number):
+    # Rank individuals based on their fitness scores
+    # Negative sign for descending order
+    sorted_indices = np.argsort(-np.array(fitness_scores))
+    ranked_population = [population[i] for i in sorted_indices]
+
+    # Select the top N individuals as parents
+    selected_parents = ranked_population[:children_number]
+
+    return selected_parents
+    
+
+# ====================================================
+# SECTION: Evolutionary algorithms
+# ====================================================
+
 # Tune prompts using GA
-def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=10, children_number=20):
+def ga_run(
+    loader, 
+    initial_population, 
+    clip_model, 
+    clip_processor, 
+    model, 
+    tokenizer, 
+    generations=10, 
+    pop_size=10, 
+    children_number=20
+):
     last_average_length = 0
     population = initial_population
+    children = []
     best_prompt = None
     best_score = -float('inf')
 
@@ -227,8 +265,6 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
         fitness_scores, last_average_length = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length)
         save_fitness_scores(fitness_file, fitness_scores)  # Save the computed scores to the file
         print("Saved initial fitness scores to file.")
-
-
 
     for generation in range(generations):
         print(f"=== Generation {generation + 1}/{generations} ===")
@@ -251,20 +287,19 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             #selected_parents = roulette_wheel_selection(fitness_scores, population, children_number)
             #selected_parents = tournament_selection(fitness_scores, population, children_number, 2)
             selected_parents = rank_selection(fitness_scores, population, children_number)
-
+            
             # Crossover and mutation to generate children
-            new_population = []
             for _ in tqdm(range(children_number), desc="Generation"):
                 parent1, parent2 = random.sample(selected_parents, 2)
                 child = crossover_mutation(model, tokenizer, parent1, parent2)
-                new_population.append(child)
+                children.append(child)
 
-            # Compute fitness scores only for the new population
-            (new_fitness_scores, last_average_length) = evaluate(loader, new_population, clip_model, clip_processor, generation + 1, last_average_length)
+            # Compute fitness scores only for the children
+            (children_fitness_scores, last_average_length) = evaluate(loader, children, clip_model, clip_processor, generation + 1, last_average_length)
 
             # Combine the old population and new children
-            combined_population = population + new_population
-            combined_fitness_scores = fitness_scores + new_fitness_scores
+            combined_population = population + children
+            combined_fitness_scores = fitness_scores + children_fitness_scores
 
             # Sort by fitness scores and retain the top N individuals
             sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
@@ -273,6 +308,96 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
 
     return best_prompt, best_score
 
+# GA with mu lambda selection. Most of the code is the same, just selection and replacement part is different
+# Also, need to pass mu_lambda parameter to the function (comma or plus)
+def ga_run_with_mu_lambda(
+    loader, 
+    initial_population, 
+    clip_model, 
+    clip_processor, 
+    model, 
+    tokenizer, 
+    generations=10, 
+    pop_size=10, 
+    children_number=20,
+    mu_lambda="comma" # comma or plus
+):
+    last_average_length = 0
+    population = initial_population
+    children = []
+    best_prompt = None
+    best_score = -float('inf')
+
+    # Define the file path for saving fitness scores
+    fitness_file = "fitness_scores.json"
+
+    # Attempt to load fitness scores from the file
+    saved_fitness_scores = load_fitness_scores(fitness_file)
+
+    if saved_fitness_scores is not None:
+        # If scores exist, use them
+        fitness_scores = saved_fitness_scores
+        print("Loaded fitness scores from file.")
+    else:
+        # If no saved scores, evaluate the fitness of the initial population
+        fitness_scores, last_average_length = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length)
+        save_fitness_scores(fitness_file, fitness_scores)  # Save the computed scores to the file
+        print("Saved initial fitness scores to file.")
+
+    for generation in range(generations):
+        print(f"=== Generation {generation + 1}/{generations} ===")
+
+        # Track the best prompt
+        max_score = max(fitness_scores)
+        if max_score > best_score:
+            best_score = max_score
+            best_prompt = population[fitness_scores.index(max_score)]
+
+        print(f"Best Score in Generation {generation + 1}: {max_score}")
+
+        # Print the current population and fitness scores
+        print("Population and Fitness Scores:")
+        for i, (prompt, score) in enumerate(zip(population, fitness_scores)):
+            print(f"  {i + 1}. {prompt} -> Fitness: {score:.4f}")
+        print("\n")
+
+        if(not generation + 1 == generations):
+            if mu_lambda == "comma":
+                if children:
+                    # Select parents from the children
+                    selected_parents = truncated_rank_selection(children_fitness_scores, children, children_number)
+                else:
+                    # First generation, select parents from the initial population
+                    selected_parents = truncated_rank_selection(fitness_scores, population, children_number)
+            elif mu_lambda == "plus":
+                # Select parents from the parents + children
+                selected_parents = truncated_rank_selection(fitness_scores, population, children_number)
+            else:
+                raise ValueError("Invalid mu_lambda value. Use 'comma' or 'plus'.")
+
+            # Crossover and mutation to generate children
+            for _ in tqdm(range(children_number), desc="Generation"):
+                parent1, parent2 = random.sample(selected_parents, 2)
+                child = crossover_mutation(model, tokenizer, parent1, parent2)
+                children.append(child)
+
+            # Compute fitness scores only for the children
+            (children_fitness_scores, last_average_length) = evaluate(loader, children, clip_model, clip_processor, generation + 1, last_average_length)
+            
+            if mu_lambda == "commma":
+                # Replace the old population with the new children
+                population = children
+                fitness_scores = children_fitness_scores
+            elif mu_lambda == "plus":
+                # Combine the old population and new children
+                population = population + children
+                fitness_scores = fitness_scores + children_fitness_scores
+
+    return best_prompt, best_score
+
+# ====================================================
+# SECTION: Main script
+# ====================================================
 
 if __name__ == "__main__":
     # Set up the models and dataset
@@ -382,7 +507,8 @@ if __name__ == "__main__":
     print(initial_population)
 
     # Run the genetic algorithm
-    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
+    #best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
+    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, "comma")
 
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
