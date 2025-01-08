@@ -328,6 +328,7 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
 
     return best_prompt, best_score
 
+'''
 # GA with mu lambda selection. Most of the code is the same, just selection and replacement part is different
 # Also, need to pass mu_lambda parameter to the function (comma or plus)
 def ga_run_with_mu_lambda(
@@ -417,7 +418,8 @@ def ga_run_with_mu_lambda(
                 fitness_scores = fitness_scores + children_fitness_scores
 
     return best_prompt, best_score
-
+'''
+    
 # ====================================================
 # SECTION: Main script
 # ====================================================
