@@ -17,7 +17,9 @@ import random
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
 
-data = pandas.read_csv(os.path.join(script_dir, "run_recap.csv"), header=None)
+file_name = "generations_10_population_10_children_10_selection_1_replacement_0"
+
+data = pandas.read_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), header=None)
 
 # Assign column names based on the description
 data.columns = ["timestamp", "best_fitness", "average_fitness", "worst_fitness", "average_length", "variance_length", "added_word"]
@@ -57,4 +59,4 @@ axes[1, 1].set_title("Added Words Over Time")
 axes[1, 1].grid()
 
 # Save the combined figure
-plt.savefig(os.path.join(script_dir, "combined_graphs.png"))
+plt.savefig(os.path.join(script_dir, f"images/{file_name}.png"))

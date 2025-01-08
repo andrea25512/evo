@@ -378,7 +378,7 @@ if __name__ == "__main__":
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
 
-    data = pandas.read_csv(os.path.join(script_dir, "run_recap.csv"), header=None)
+    data = pandas.read_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), header=None)
 
     # Assign column names based on the description
     data.columns = ["timestamp", "best_fitness", "average_fitness", "worst_fitness", "average_length", "variance_length", "added_word"]
