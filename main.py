@@ -13,7 +13,8 @@ from pathlib import Path
 import pandas
 import string
 import matplotlib.pyplot as plt
-import json
+import random
+import argparse
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
 device = "cuda:0"
@@ -21,14 +22,6 @@ seed = 42
 test_images_number = 100
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 seen_words = []
-
-#----------------------------------------------------------------------------------------------------------------------------------------------------
-
-generations = 10
-pop_size = 50
-child_size = 100
-
-#----------------------------------------------------------------------------------------------------------------------------------------------------
 
 template = { 
     "standard": """
@@ -95,15 +88,16 @@ def get_fitness(loader, prompt, clip_model, clip_processor):
     similarity = 0
     for images, labels in loader:
         text_inputs = clip_processor(text=[prompt.replace("<tag>", label) for label in labels], return_tensors="pt", padding=True)['input_ids']
-        similarity += np.sum(clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy())
+        similarity += np.sum(clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image.cpu().detach().numpy())
         del images, text_inputs
         torch.cuda.empty_cache()
-    similarity = similarity / len(loader)
+    similarity = similarity / test_images_number
     
     return similarity
 
-def evaluate(loader, population, clip_model, clip_processor, timestamp, last_average_length):
+def evaluate(loader, population, clip_model, clip_processor, timestamp, last_average_length, file_name):
     fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(population, desc="Evaluation")]
+    print(fitness_scores)
     best_fitness = np.max(fitness_scores)
     average_fitness = np.average(fitness_scores)
     worst_fitness = np.min(fitness_scores)
@@ -127,7 +121,7 @@ def evaluate(loader, population, clip_model, clip_processor, timestamp, last_ave
         'variance_length': [variance_length],
         'added_word': [added_word]
     })
-    tab_metrics.to_csv(os.path.join(script_dir, "run_recap.csv"), mode='a', header=False, index=False)
+    tab_metrics.to_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), mode='a', header=False, index=False)
 
     return (fitness_scores, last_average_length)
 
@@ -240,24 +234,14 @@ def truncated_rank_selection(fitness_scores, population, children_number):
 # ====================================================
 
 # Tune prompts using GA
-def ga_run(
-    loader, 
-    initial_population, 
-    clip_model, 
-    clip_processor, 
-    model, 
-    tokenizer, 
-    generations=10, 
-    pop_size=10, 
-    children_number=20
-):
+def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=50, children_number=100, selection_index=0, file_name="TEST"):
     last_average_length = 0
     population = initial_population
     children = []
     best_prompt = None
     best_score = -float('inf')
 
-    # Define the file path for saving fitness scores
+    """ # Define the file path for saving fitness scores
     fitness_file = "fitness_scores.json"
 
     # Attempt to load fitness scores from the file
@@ -271,7 +255,10 @@ def ga_run(
         # If no saved scores, evaluate the fitness of the initial population
         fitness_scores, last_average_length = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length)
         save_fitness_scores(fitness_file, fitness_scores)  # Save the computed scores to the file
-        print("Saved initial fitness scores to file.")
+        print("Saved initial fitness scores to file.") """
+        
+    # Evaluate the fitness of the initial population
+    (fitness_scores, last_average_length) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length, file_name)
 
     for generation in range(generations):
         print(f"=== Generation {generation + 1}/{generations} ===")
@@ -291,18 +278,23 @@ def ga_run(
         print("\n")
 
         if(not generation + 1 == generations):
-            #selected_parents = roulette_wheel_selection(fitness_scores, population, children_number)
-            #selected_parents = tournament_selection(fitness_scores, population, children_number, 2)
-            selected_parents = rank_selection(fitness_scores, population, children_number)
-            
+            if(selection_index == 0):
+                selected_parents = roulette_wheel_selection(fitness_scores, population, children_number)
+            elif(selection_index == 1):
+                selected_parents = tournament_selection(fitness_scores, population, children_number, 2)
+            elif(selection_index == 2):
+                selected_parents = rank_selection(fitness_scores, population, children_number)
+            else:
+                raise("Wrong selection index")
+
             # Crossover and mutation to generate children
             for _ in tqdm(range(children_number), desc="Generation"):
                 parent1, parent2 = random.sample(selected_parents, 2)
                 child = crossover_mutation(model, tokenizer, parent1, parent2)
                 children.append(child)
 
-            # Compute fitness scores only for the children
-            (children_fitness_scores, last_average_length) = evaluate(loader, children, clip_model, clip_processor, generation + 1, last_average_length)
+            # Compute fitness scores only for the new population
+            (new_fitness_scores, last_average_length) = evaluate(loader, new_population, clip_model, clip_processor, generation + 1, last_average_length, file_name)
 
             # Combine the old population and new children
             combined_population = population + children
@@ -335,7 +327,7 @@ def ga_run_with_mu_lambda(
     best_prompt = None
     best_score = -float('inf')
 
-    # Define the file path for saving fitness scores
+    """ # Define the file path for saving fitness scores
     fitness_file = "fitness_scores.json"
 
     # Attempt to load fitness scores from the file
@@ -349,7 +341,9 @@ def ga_run_with_mu_lambda(
         # If no saved scores, evaluate the fitness of the initial population
         fitness_scores, last_average_length = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length)
         save_fitness_scores(fitness_file, fitness_scores)  # Save the computed scores to the file
-        print("Saved initial fitness scores to file.")
+        print("Saved initial fitness scores to file.") """
+
+    (fitness_scores, last_average_length) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length, file_name)
 
     for generation in range(generations):
         print(f"=== Generation {generation + 1}/{generations} ===")
@@ -389,7 +383,7 @@ def ga_run_with_mu_lambda(
                 children.append(child)
 
             # Compute fitness scores only for the children
-            (children_fitness_scores, last_average_length) = evaluate(loader, children, clip_model, clip_processor, generation + 1, last_average_length)
+            (children_fitness_scores, last_average_length) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length, file_name)
             
             if mu_lambda == "commma":
                 # Replace the old population with the new children
@@ -407,6 +401,24 @@ def ga_run_with_mu_lambda(
 # ====================================================
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Intercept command-line parameters.")
+    parser.add_argument('-p', '--population', type=int, help='Population amount', default=10)
+    parser.add_argument('-c', '--children', type=int, help='Children amount', default=20)
+    parser.add_argument('-g', '--generations', type=int, help='Generation amount', default=10)
+    parser.add_argument('-s', '--selection', type=int, help='Selection index', default=0)
+    parser.add_argument('-r', '--replacement', type=int, help='Replacement index', default=0) # zero fixed for now as only elitism is avelable
+
+    args = vars(parser.parse_args())
+
+    generations = args['generations']
+    pop_size = args['population']
+    child_size = args['children']
+    selection_index = args['selection']
+    replacement_index = args['replacement']
+    
+    file_name = f"generations_{generations}_population_{pop_size}_children_{child_size}_selection_{selection_index}_replacement_{replacement_index}"
+    print(f"Output file name: {file_name}")
+
     # Set up the models and dataset
     torch.manual_seed(seed)
     random.seed(seed)
@@ -424,7 +436,8 @@ if __name__ == "__main__":
 
     dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
-    loader = DataLoader(test_samples, batch_size=8, shuffle=False, num_workers=8)
+    # LEAVE THE BATCH SIZE AND NUMBER OF WORKERS TO 1!!!!!!!!!!!
+    loader = DataLoader(test_samples, batch_size=1, shuffle=False, num_workers=1)
 
     # Initial population of prompts
     initial_population = [
@@ -511,16 +524,16 @@ if __name__ == "__main__":
     ]
 
     initial_population = random.sample(initial_population, k=pop_size)
-    print(initial_population)
 
     # Run the genetic algorithm
     #best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
-    best_prompt, best_score = ga_run_with_mu_lambda(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, mu_lambda="comma")
+    #best_prompt, best_score = ga_run_with_mu_lambda(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, mu_lambda="comma")
+    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size, selection_index, file_name)
 
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
 
-    data = pandas.read_csv(os.path.join(script_dir, "run_recap.csv"), header=None)
+    data = pandas.read_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), header=None)
 
     # Assign column names based on the description
     data.columns = ["timestamp", "best_fitness", "average_fitness", "worst_fitness", "average_length", "variance_length", "added_word"]
@@ -560,4 +573,4 @@ if __name__ == "__main__":
     axes[1, 1].grid()
 
     # Save the combined figure
-    plt.savefig(os.path.join(script_dir, "combined_graphs.png"))
+    plt.savefig(os.path.join(script_dir, f"images/{file_name}.png"))
