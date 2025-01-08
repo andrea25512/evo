@@ -3,16 +3,17 @@ import re
 
 # Define parameter combinations
 configs = [
+    "--generations 10 --population 10 --children 10 --selection 1",
     "--generations 10 --population 10 --children 10 --selection 2",
     "--generations 10 --population 10 --children 20 --selection 0",
     "--generations 10 --population 10 --children 20 --selection 1",
     "--generations 10 --population 10 --children 20 --selection 2",
-    "--generations 10 --population 50 --children 100 --selection 0",
-    "--generations 10 --population 50 --children 100 --selection 1",
-    "--generations 10 --population 50 --children 100 --selection 2",
     "--generations 10 --population 50 --children 50 --selection 0",
     "--generations 10 --population 50 --children 50 --selection 1",
-    "--generations 10 --population 50 --children 50 --selection 2"
+    "--generations 10 --population 50 --children 50 --selection 2",
+    "--generations 10 --population 50 --children 100 --selection 0",
+    "--generations 10 --population 50 --children 100 --selection 1",
+    "--generations 10 --population 50 --children 100 --selection 2"
 ]
 
 # Iterate over each configuration and execute the script sequentially

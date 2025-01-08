@@ -15,6 +15,7 @@ import string
 import matplotlib.pyplot as plt
 import random
 import argparse
+import json
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
 device = "cuda:0"
@@ -94,36 +95,6 @@ def get_fitness(loader, prompt, clip_model, clip_processor):
     similarity = similarity / test_images_number
     
     return similarity
-
-def evaluate(loader, population, clip_model, clip_processor, timestamp, last_average_length, file_name):
-    fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(population, desc="Evaluation")]
-    print(fitness_scores)
-    best_fitness = np.max(fitness_scores)
-    average_fitness = np.average(fitness_scores)
-    worst_fitness = np.min(fitness_scores)
-    average_length = np.average([len(prompt) for prompt in population])
-    variance_length = average_length - last_average_length
-    last_average_length = average_length
-    added_word = 0
-    for prompt in population:
-        for word in prompt.split(" "):
-            word = word.strip().lower().translate(str.maketrans('', '', string.punctuation))
-            if(word not in seen_words):
-                added_word += 1
-                seen_words.append(word)
-
-    tab_metrics = pandas.DataFrame({
-        'timestamp': [timestamp],
-        'best_fitness': [best_fitness],
-        'average_fitness': [average_fitness],
-        'worst_fitness': [worst_fitness],
-        'average_length': [average_length],
-        'variance_length': [variance_length],
-        'added_word': [added_word]
-    })
-    tab_metrics.to_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), mode='a', header=False, index=False)
-
-    return (fitness_scores, last_average_length)
 
 # Extract the final prompt wrapped in <prompt> tags
 def get_final_prompt(text):
@@ -237,7 +208,6 @@ def truncated_rank_selection(fitness_scores, population, children_number):
 def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=50, children_number=100, selection_index=0, file_name="TEST"):
     last_average_length = 0
     population = initial_population
-    children = []
     best_prompt = None
     best_score = -float('inf')
 
@@ -259,7 +229,32 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
         print("Saved initial fitness scores to file.") """
         
     # Evaluate the fitness of the initial population
-    (fitness_scores, last_average_length) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length, file_name)
+    fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(population, desc="Evaluation")]
+
+    best_fitness = np.max(fitness_scores)
+    average_fitness = np.average(fitness_scores)
+    worst_fitness = np.min(fitness_scores)
+    average_length = np.average([len(prompt) for prompt in population])
+    variance_length = average_length - last_average_length
+    last_average_length = average_length
+    added_word = 0
+    for prompt in population:
+        for word in prompt.split(" "):
+            word = word.strip().lower().translate(str.maketrans('', '', string.punctuation))
+            if(word not in seen_words):
+                added_word += 1
+                seen_words.append(word)
+
+    tab_metrics = pandas.DataFrame({
+        'timestamp': [0],
+        'best_fitness': [best_fitness],
+        'average_fitness': [average_fitness],
+        'worst_fitness': [worst_fitness],
+        'average_length': [average_length],
+        'variance_length': [variance_length],
+        'added_word': [added_word]
+    })
+    tab_metrics.to_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), mode='a', header=False, index=False)
 
     for generation in range(generations):
         print(f"=== Generation {generation + 1}/{generations} ===")
@@ -270,9 +265,8 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             best_score = max_score
             best_prompt = population[fitness_scores.index(max_score)]
 
-        print(f"Best Score in Generation {generation + 1}: {max_score}")
-
         # Print the current population and fitness scores
+        print(f"Best Score in Generation {generation + 1}: {max_score}")
         print("Population and Fitness Scores:")
         for i, (prompt, score) in enumerate(zip(population, fitness_scores)):
             print(f"  {i + 1}. {prompt} -> Fitness: {score:.4f}")
@@ -288,6 +282,7 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             else:
                 raise("Wrong selection index")
 
+            children=[]
             # Crossover and mutation to generate children
             for _ in tqdm(range(children_number), desc="Generation"):
                 parent1, parent2 = random.sample(selected_parents, 2)
@@ -295,7 +290,7 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
                 children.append(child)
 
             # Compute fitness scores only for the new population
-            (new_fitness_scores, last_average_length) = evaluate(loader, new_population, clip_model, clip_processor, generation + 1, last_average_length, file_name)
+            children_fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(children, desc="Evaluation")]
 
             # Combine the old population and new children
             combined_population = population + children
@@ -305,6 +300,31 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
             population = [combined_population[i] for i in sorted_indices[:pop_size]]
             fitness_scores = [combined_fitness_scores[i] for i in sorted_indices[:pop_size]]
+
+            best_fitness = np.max(fitness_scores)
+            average_fitness = np.average(fitness_scores)
+            worst_fitness = np.min(fitness_scores)
+            average_length = np.average([len(prompt) for prompt in population])
+            variance_length = average_length - last_average_length
+            last_average_length = average_length
+            added_word = 0
+            for prompt in population:
+                for word in prompt.split(" "):
+                    word = word.strip().lower().translate(str.maketrans('', '', string.punctuation))
+                    if(word not in seen_words):
+                        added_word += 1
+                        seen_words.append(word)
+
+            tab_metrics = pandas.DataFrame({
+                'timestamp': [generation + 1],
+                'best_fitness': [best_fitness],
+                'average_fitness': [average_fitness],
+                'worst_fitness': [worst_fitness],
+                'average_length': [average_length],
+                'variance_length': [variance_length],
+                'added_word': [added_word]
+            })
+            tab_metrics.to_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), mode='a', header=False, index=False)
 
     return best_prompt, best_score
 
@@ -431,8 +451,8 @@ if __name__ == "__main__":
     # Quantization settings
     quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     weights_dir = os.path.normpath(os.path.join(script_dir, "weights/alpaca/"))
-    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(weights_dir, quantization_config=quantization_config)
-    #alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto")
+    #alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(weights_dir, quantization_config=quantization_config)
+    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto")
     print("Model directory: ", weights_dir)
     alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
 
