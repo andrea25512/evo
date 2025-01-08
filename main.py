@@ -13,6 +13,7 @@ from pathlib import Path
 import pandas
 import string
 import matplotlib.pyplot as plt
+import json
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
 device = "cuda:0"
@@ -91,14 +92,14 @@ def get_fitness(loader, prompt, clip_model, clip_processor):
     
     return similarity
 
-def evaluate(loader, population, clip_model, clip_processor, timestamp, last_average_lenght):
+def evaluate(loader, population, clip_model, clip_processor, timestamp, last_average_length):
     fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(population, desc="Evaluation")]
     best_fitness = np.max(fitness_scores)
     average_fitness = np.average(fitness_scores)
     worst_fitness = np.min(fitness_scores)
-    average_lenght = np.average([len(prompt) for prompt in population])
-    variance_lenght = average_lenght - last_average_lenght
-    last_average_lenght = average_lenght
+    average_length = np.average([len(prompt) for prompt in population])
+    variance_length = average_length - last_average_length
+    last_average_length = average_length
     added_word = 0
     for prompt in population:
         for word in prompt.split(" "):
@@ -112,13 +113,13 @@ def evaluate(loader, population, clip_model, clip_processor, timestamp, last_ave
         'best_fitness': [best_fitness],
         'average_fitness': [average_fitness],
         'worst_fitness': [worst_fitness],
-        'average_lenght': [average_lenght],
-        'variance_lenght': [variance_lenght],
+        'average_length': [average_length],
+        'variance_length': [variance_length],
         'added_word': [added_word]
     })
     tab_metrics.to_csv(os.path.join(script_dir, "run_recap.csv"), mode='a', header=False, index=False)
 
-    return (fitness_scores, last_average_lenght)
+    return (fitness_scores, last_average_length)
 
 # Extract the final prompt wrapped in <prompt> tags
 def get_final_prompt(text):
@@ -141,15 +142,47 @@ def crossover_mutation(model, tokenizer, text1, text2):
     output_text = tokenizer.batch_decode(out.cpu(), skip_special_tokens=True)[0]
     return get_final_prompt(output_text)
 
+def load_fitness_scores(file_path, to_numpy_float32=False):
+    if os.path.exists(file_path) and os.path.getsize(file_path) > 0:
+        with open(file_path, "r") as f:
+            scores = json.load(f)
+            if to_numpy_float32:
+                # Convert Python float to numpy.float32
+                scores = [np.float32(score) for score in scores]
+            return scores
+    return None
+
+def save_fitness_scores(file_path, fitness_scores):
+    # Convert numpy.float32 to float to ensure JSON compatibility
+    fitness_scores = [float(score) for score in fitness_scores]
+    with open(file_path, "w") as f:
+        json.dump(fitness_scores, f)
+
+
 # Tune prompts using GA
 def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=10, children_number=20):
-    last_average_lenght = 0
+    last_average_length = 0
     population = initial_population
     best_prompt = None
     best_score = -float('inf')
 
-    # Evaluate the fitness of the initial population
-    (fitness_scores, last_average_lenght) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_lenght)
+    # Define the file path for saving fitness scores
+    fitness_file = "fitness_scores.json"
+
+    # Attempt to load fitness scores from the file
+    saved_fitness_scores = load_fitness_scores(fitness_file)
+
+    if saved_fitness_scores is not None:
+        # If scores exist, use them
+        fitness_scores = saved_fitness_scores
+        print("Loaded fitness scores from file.")
+    else:
+        # If no saved scores, evaluate the fitness of the initial population
+        fitness_scores, last_average_length = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length)
+        save_fitness_scores(fitness_file, fitness_scores)  # Save the computed scores to the file
+        print("Saved initial fitness scores to file.")
+
+
 
     for generation in range(generations):
         print(f"=== Generation {generation + 1}/{generations} ===")
@@ -184,7 +217,7 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
                 new_population.append(child)
 
             # Compute fitness scores only for the new population
-            (new_fitness_scores, last_average_lenght) = evaluate(loader, new_population, clip_model, clip_processor, generation + 1, last_average_lenght)
+            (new_fitness_scores, last_average_length) = evaluate(loader, new_population, clip_model, clip_processor, generation + 1, last_average_length)
 
             # Combine the old population and new children
             combined_population = population + new_population
@@ -204,11 +237,11 @@ if __name__ == "__main__":
 
     clip_model = CLIPModel.from_pretrained("openai/clip-vit-large-patch14").to(device).eval()
     clip_processor = CLIPProcessor.from_pretrained("openai/clip-vit-large-patch14")
-    # Quantize alpaca
+    # Quantization settings
     quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     weights_dir = os.path.normpath(os.path.join(script_dir, "weights/alpaca/"))
-    #alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(weights_dir, quantization_config=quantization_config)
-    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto")
+    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(weights_dir, quantization_config=quantization_config)
+    #alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto")
     print("Model directory: ", weights_dir)
     alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
 
