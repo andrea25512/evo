@@ -515,7 +515,7 @@ if __name__ == "__main__":
 
     # Run the genetic algorithm
     #best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
-    best_prompt, best_score = ga_run_with_mu_lambda(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, "comma")
+    best_prompt, best_score = ga_run_with_mu_lambda(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, mu_lambda="comma")
 
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
