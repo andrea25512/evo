@@ -14,6 +14,7 @@ import pandas
 import string
 import matplotlib.pyplot as plt
 import random
+import argparse
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
 device = "cuda:0"
@@ -21,14 +22,6 @@ seed = 42
 test_images_number = 100
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 seen_words = []
-
-#----------------------------------------------------------------------------------------------------------------------------------------------------
-
-generations = 10
-pop_size = 50
-child_size = 100
-
-#----------------------------------------------------------------------------------------------------------------------------------------------------
 
 template = { 
     "standard": """
@@ -196,7 +189,7 @@ def rank_selection(fitness_scores, population, children_number):
     return selected_parents
 
 # Tune prompts using GA
-def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=50, children_number=100):
+def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=50, children_number=100, selection_index=0):
     last_average_lenght = 0
     population = initial_population
     best_prompt = None
@@ -223,9 +216,14 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
         print("\n")
 
         if(not generation + 1 == generations):
-            #selected_parents = roulette_wheel_selection(fitness_scores, population, children_number)
-            #selected_parents = tournament_selection(fitness_scores, population, children_number, 2)
-            selected_parents = rank_selection(fitness_scores, population, children_number)
+            if(selection_index == 0):
+                selected_parents = roulette_wheel_selection(fitness_scores, population, children_number)
+            elif(selection_index == 1):
+                selected_parents = tournament_selection(fitness_scores, population, children_number, 2)
+            elif(selection_index == 2):
+                selected_parents = rank_selection(fitness_scores, population, children_number)
+            else:
+                raise("Wrong selection index")
 
             # Crossover and mutation to generate children
             new_population = []
@@ -250,6 +248,24 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Intercept command-line parameters.")
+    parser.add_argument('-p', '--population', type=int, help='Population amount', default=10)
+    parser.add_argument('-c', '--children', type=int, help='Children amount', default=20)
+    parser.add_argument('-g', '--generations', type=int, help='Generation amount', default=10)
+    parser.add_argument('-s', '--selection', type=int, help='Selection index', default=0)
+
+    args = parser.parse_args()
+
+    generations = args['generations']
+    pop_size = args['population']
+    child_size = args['children']
+    selection_index = args['selection']
+
+    print(f"Population amount: {generations}")
+    print(f"Children amount: {pop_size}")
+    print(f"Generation amount: {child_size}")
+    print(f"Selection index: {selection_index}")
+
     # Set up the models and dataset
     torch.manual_seed(seed)
     random.seed(seed)
@@ -354,10 +370,9 @@ if __name__ == "__main__":
     ]
 
     initial_population = random.sample(initial_population, k=pop_size)
-    print(initial_population)
 
     # Run the genetic algorithm
-    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size)
+    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size, selection_index)
 
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
