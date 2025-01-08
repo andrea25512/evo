@@ -22,6 +22,13 @@ test_images_number = 100
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 seen_words = []
 
+#----------------------------------------------------------------------------------------------------------------------------------------------------
+
+generations = 10
+pop_size = 50
+child_size = 100
+
+#----------------------------------------------------------------------------------------------------------------------------------------------------
 
 template = { 
     "standard": """
@@ -87,11 +94,11 @@ class ImageDataset(Dataset):
 def get_fitness(loader, prompt, clip_model, clip_processor):
     similarity = 0
     for images, labels in loader:
-        text_inputs = torch.stack([clip_processor(text=prompt.replace("<tag>", label), return_tensors="pt", padding=True)['input_ids'][0] for label in labels])
-        similarity += clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy()
+        text_inputs = clip_processor(text=[prompt.replace("<tag>", label) for label in labels], return_tensors="pt", padding=True)['input_ids']
+        similarity += np.sum(clip_model(pixel_values=images.to(device), input_ids=text_inputs.to(device)).logits_per_image[0].cpu().detach().numpy())
         del images, text_inputs
         torch.cuda.empty_cache()
-    similarity = similarity[0] / len(loader)
+    similarity = similarity / len(loader)
     
     return similarity
 
@@ -417,7 +424,7 @@ if __name__ == "__main__":
 
     dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
-    loader = DataLoader(test_samples, batch_size=1, shuffle=False, num_workers=1)
+    loader = DataLoader(test_samples, batch_size=8, shuffle=False, num_workers=8)
 
     # Initial population of prompts
     initial_population = [
@@ -503,7 +510,7 @@ if __name__ == "__main__":
         'a tattoo of the <tag>.',
     ]
 
-    initial_population = random.choices(initial_population, k=10)
+    initial_population = random.sample(initial_population, k=pop_size)
     print(initial_population)
 
     # Run the genetic algorithm
