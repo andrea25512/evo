@@ -241,6 +241,7 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
     best_prompt = None
     best_score = -float('inf')
 
+    # DOES NOT WORK
     """ # Define the file path for saving fitness scores
     fitness_file = "fitness_scores.json"
 
@@ -327,6 +328,7 @@ def ga_run_with_mu_lambda(
     best_prompt = None
     best_score = -float('inf')
 
+    # DOES NOT WORK
     """ # Define the file path for saving fitness scores
     fitness_file = "fitness_scores.json"
 
@@ -526,7 +528,6 @@ if __name__ == "__main__":
     initial_population = random.sample(initial_population, k=pop_size)
 
     # Run the genetic algorithm
-    #best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer)
     #best_prompt, best_score = ga_run_with_mu_lambda(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, mu_lambda="comma")
     best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size, selection_index, file_name)
 
