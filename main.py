@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import random
 import argparse
 import json
+from difflib import SequenceMatcher
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
 device = "cuda:0"
@@ -23,6 +24,7 @@ seed = 42
 test_images_number = 100
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 seen_words = []
+niche_threshold = 0.95
 
 template = { 
     "standard": """
@@ -187,7 +189,6 @@ def rank_selection(fitness_scores, population, children_number):
 
     return selected_parents
 
-# Select N best individuals
 def truncated_rank_selection(fitness_scores, population, children_number):
     # Rank individuals based on their fitness scores
     # Negative sign for descending order
@@ -199,13 +200,12 @@ def truncated_rank_selection(fitness_scores, population, children_number):
 
     return selected_parents
     
-
 # ====================================================
 # SECTION: Evolutionary algorithms
 # ====================================================
 
 # Tune prompts using GA
-def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=50, children_number=100, selection_index=0, file_name="TEST"):
+def ga_run(loader, initial_population, clip_model, clip_processor, model, tokenizer, generations=10, pop_size=50, children_number=100, selection_index=0, replacement_index=0, file_name="TEST"):
     last_average_length = 0
     population = initial_population
     best_prompt = None
@@ -227,7 +227,7 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
         fitness_scores, last_average_length = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length)
         save_fitness_scores(fitness_file, fitness_scores)  # Save the computed scores to the file
         print("Saved initial fitness scores to file.") """
-        
+
     # Evaluate the fitness of the initial population
     fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(population, desc="Evaluation")]
 
@@ -280,7 +280,7 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             elif(selection_index == 2):
                 selected_parents = rank_selection(fitness_scores, population, children_number)
             else:
-                raise("Wrong selection index")
+                raise ValueError("Wrong selection index")
 
             children=[]
             # Crossover and mutation to generate children
@@ -293,13 +293,99 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             children_fitness_scores = [get_fitness(loader, prompt, clip_model, clip_processor) for prompt in tqdm(children, desc="Evaluation")]
 
             # Combine the old population and new children
-            combined_population = population + children
-            combined_fitness_scores = fitness_scores + children_fitness_scores
+            if(replacement_index == 0):
+                # (µ+λ)
+                combined_population = population + children
+                combined_fitness_scores = fitness_scores + children_fitness_scores
 
-            # Sort by fitness scores and retain the top N individuals
-            sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
-            population = [combined_population[i] for i in sorted_indices[:pop_size]]
-            fitness_scores = [combined_fitness_scores[i] for i in sorted_indices[:pop_size]]
+                # Sort by fitness scores and retain the top N individuals
+                sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
+                population = [combined_population[i] for i in sorted_indices[:pop_size]]
+                fitness_scores = [combined_fitness_scores[i] for i in sorted_indices[:pop_size]]
+            elif(replacement_index == 1):
+                # (µ,λ)
+                combined_population = children
+                combined_fitness_scores = children_fitness_scores
+
+                # Sort by fitness scores and retain the top N individuals
+                sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
+                population = [combined_population[i] for i in sorted_indices[:pop_size]]
+                fitness_scores = [combined_fitness_scores[i] for i in sorted_indices[:pop_size]]
+            elif(replacement_index == 2):
+                combined_population = population + children
+                combined_fitness_scores = fitness_scores + children_fitness_scores
+
+                niches = []
+                niches_fitness = []
+                for (prompt, fitness) in zip(combined_population, combined_fitness_scores):
+                    # check if the prompt fits into an existing niche
+                    added_to_niche = False
+                    max_sim = 0
+                    for (niche, niche_fitness) in zip(niches, niches_fitness):
+                        # compare with all prompts of the niche
+                        sim = max([SequenceMatcher(None, prompt, niche_prompt).ratio() for niche_prompt in niche])
+                        if(sim > max_sim):
+                            max_sim = sim
+                        if  sim > niche_threshold:
+                            niche.append(prompt)
+                            niche_fitness.append(fitness)
+                            added_to_niche = True
+                            break
+                    # if no suitable niche exists, create a new one
+                    if not added_to_niche:
+                        print("New niche with: ", prompt, " - max similarity: ",max_sim)
+                        niches.append([prompt])
+                        niches_fitness.append([fitness])
+
+                # calculate average fitness for each niche
+                niche_avg_fitness = [sum(niche_fitness) / len(niche_fitness) if niche_fitness else 0 for niche_fitness in niches_fitness]
+
+                # compute selection probabilities by normalizing average fitness
+                total_avg_fitness = sum(niche_avg_fitness)
+                if total_avg_fitness > 0:
+                    niche_selection_probabilities = [avg_fitness / total_avg_fitness for avg_fitness in niche_avg_fitness]
+                else:
+                    # equal probability if all averages are zero
+                    niche_selection_probabilities = [1 / len(niches) for _ in niches]  
+
+                # determine how many samples to take from each niche
+                niche_sample_counts = [int(round(pop_size * prob)) for prob in niche_selection_probabilities]
+                
+                # adjust sample counts to ensure the total matches pop_size
+                while sum(niche_sample_counts) > pop_size:
+                    # reduce from niches with the lowest selection probabilities
+                    niche_sample_counts[niche_sample_counts.index(max(niche_sample_counts))] -= 1
+                while sum(niche_sample_counts) < pop_size:
+                    # add to niches with the highest selection probabilities
+                    niche_sample_counts[niche_sample_counts.index(min(niche_sample_counts))] += 1
+
+                # Compute selection probabilities by normalizing average fitness
+                total_avg_fitness = sum(niche_avg_fitness)
+                if total_avg_fitness > 0:
+                    niche_selection_probabilities = [avg_fitness / total_avg_fitness for avg_fitness in niche_avg_fitness]
+                else:
+                    # equal probability if all averages are zero
+                    niche_selection_probabilities = [1 / len(niches) for _ in niches]  
+
+                # select prompts and fitness scores for the next generation
+                population = []
+                fitness_scores = []
+
+                for niche, niche_fitness, sample_count in zip(niches, niches_fitness, niche_sample_counts):
+                    # select the top 'sample_count' elements from each niche
+                    if sample_count > 0:
+                        top_indices = sorted(range(len(niche_fitness)), key=lambda i: niche_fitness[i], reverse=True)[:sample_count]
+                        population.extend([niche[i] for i in top_indices])
+                        fitness_scores.extend([niche_fitness[i] for i in top_indices])
+
+                # sort the population and fitness_scores based on fitness
+                sorted_pairs = sorted(zip(population, fitness_scores), key=lambda x: x[1], reverse=True)
+                population, fitness_scores = zip(*sorted_pairs)
+                population = list(population)
+                fitness_scores = list(fitness_scores)
+
+            else:
+                raise ValueError("Wrong replacement index")
 
             best_fitness = np.max(fitness_scores)
             average_fitness = np.average(fitness_scores)
@@ -327,98 +413,6 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             tab_metrics.to_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), mode='a', header=False, index=False)
 
     return best_prompt, best_score
-
-'''
-# GA with mu lambda selection. Most of the code is the same, just selection and replacement part is different
-# Also, need to pass mu_lambda parameter to the function (comma or plus)
-def ga_run_with_mu_lambda(
-    loader, 
-    initial_population, 
-    clip_model, 
-    clip_processor, 
-    model, 
-    tokenizer, 
-    generations=10, 
-    pop_size=10, 
-    children_number=20,
-    mu_lambda="comma" # comma or plus
-):
-    last_average_length = 0
-    population = initial_population
-    children = []
-    best_prompt = None
-    best_score = -float('inf')
-
-    # DOES NOT WORK
-    """ # Define the file path for saving fitness scores
-    fitness_file = "fitness_scores.json"
-
-    # Attempt to load fitness scores from the file
-    saved_fitness_scores = load_fitness_scores(fitness_file)
-
-    if saved_fitness_scores is not None:
-        # If scores exist, use them
-        fitness_scores = saved_fitness_scores
-        print("Loaded fitness scores from file.")
-    else:
-        # If no saved scores, evaluate the fitness of the initial population
-        fitness_scores, last_average_length = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length)
-        save_fitness_scores(fitness_file, fitness_scores)  # Save the computed scores to the file
-        print("Saved initial fitness scores to file.") """
-
-    (fitness_scores, last_average_length) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length, file_name)
-
-    for generation in range(generations):
-        print(f"=== Generation {generation + 1}/{generations} ===")
-
-        # Track the best prompt
-        max_score = max(fitness_scores)
-        if max_score > best_score:
-            best_score = max_score
-            best_prompt = population[fitness_scores.index(max_score)]
-
-        print(f"Best Score in Generation {generation + 1}: {max_score}")
-
-        # Print the current population and fitness scores
-        print("Population and Fitness Scores:")
-        for i, (prompt, score) in enumerate(zip(population, fitness_scores)):
-            print(f"  {i + 1}. {prompt} -> Fitness: {score:.4f}")
-        print("\n")
-
-        if(not generation + 1 == generations):
-            if mu_lambda == "comma":
-                if children:
-                    # Select parents from the children
-                    selected_parents = truncated_rank_selection(children_fitness_scores, children, children_number)
-                else:
-                    # First generation, select parents from the initial population
-                    selected_parents = truncated_rank_selection(fitness_scores, population, children_number)
-            elif mu_lambda == "plus":
-                # Select parents from the parents + children
-                selected_parents = truncated_rank_selection(fitness_scores, population, children_number)
-            else:
-                raise ValueError("Invalid mu_lambda value. Use 'comma' or 'plus'.")
-
-            # Crossover and mutation to generate children
-            for _ in tqdm(range(children_number), desc="Generation"):
-                parent1, parent2 = random.sample(selected_parents, 2)
-                child = crossover_mutation(model, tokenizer, parent1, parent2)
-                children.append(child)
-
-            # Compute fitness scores only for the children
-            (children_fitness_scores, last_average_length) = evaluate(loader, population, clip_model, clip_processor, 0, last_average_length, file_name)
-            
-            if mu_lambda == "commma":
-                # Replace the old population with the new children
-                population = children
-                fitness_scores = children_fitness_scores
-            elif mu_lambda == "plus":
-                # Combine the old population and new children
-                population = population + children
-                fitness_scores = fitness_scores + children_fitness_scores
-
-    return best_prompt, best_score
-'''
     
 # ====================================================
 # SECTION: Main script
@@ -550,8 +544,7 @@ if __name__ == "__main__":
     initial_population = random.sample(initial_population, k=pop_size)
 
     # Run the genetic algorithm
-    #best_prompt, best_score = ga_run_with_mu_lambda(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, mu_lambda="comma")
-    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size, selection_index, file_name)
+    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size, selection_index, replacement_index, file_name)
 
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
