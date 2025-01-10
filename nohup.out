@@ -34,3 +34,17 @@ Traceback (most recent call last):
   File "/usr/lib/python3.10/subprocess.py", line 1953, in _wait
     time.sleep(delay)
 KeyboardInterrupt
+Running: python3 main.py --generations 10 --population 10 --children 10 --selection 0 --replacement 1
+Running: python3 main.py --generations 10 --population 10 --children 10 --selection 1 --replacement 1
+Running: python3 main.py --generations 10 --population 10 --children 10 --selection 2 --replacement 1
+Running: python3 main.py --generations 10 --population 10 --children 20 --selection 0 --replacement 1
+Running: python3 main.py --generations 10 --population 10 --children 20 --selection 1 --replacement 1
+Running: python3 main.py --generations 10 --population 10 --children 20 --selection 2 --replacement 1
+Running: python3 main.py --generations 10 --population 50 --children 50 --selection 0 --replacement 1
+Running: python3 main.py --generations 10 --population 50 --children 50 --selection 1 --replacement 1
+Running: python3 main.py --generations 10 --population 50 --children 50 --selection 2 --replacement 1
+Running: python3 main.py --generations 10 --population 50 --children 100 --selection 0 --replacement 1
+Running: python3 main.py --generations 10 --population 50 --children 100 --selection 1 --replacement 1
+Running: python3 main.py --generations 10 --population 50 --children 100 --selection 2 --replacement 1
+Running: python3 main.py --generations 10 --population 10 --children 20 --selection 0 --replacement 1
+Running: python3 main.py --generations 10 --population 10 --children 20 --selection 0 --replacement 1
