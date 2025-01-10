@@ -287,20 +287,19 @@ def de_run(loader, initial_population, clip_model, clip_processor, model, tokeni
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Intercept command-line parameters.")
     parser.add_argument('-p', '--population', type=int, help='Population amount', default=10)
-    parser.add_argument('-c', '--children', type=int, help='Children amount', default=20)
     parser.add_argument('-g', '--generations', type=int, help='Generation amount', default=10)
-    parser.add_argument('-s', '--selection', type=int, help='Selection index', default=0)
-    parser.add_argument('-r', '--replacement', type=int, help='Replacement index', default=0) # zero fixed for now as only elitism is avelable
+    parser.add_argument('-d', '--donor_random', action='store_true', help='Enable random donor')
 
     args = vars(parser.parse_args())
 
     generations = args['generations']
     pop_size = args['population']
-    child_size = args['children']
-    selection_index = args['selection']
-    replacement_index = args['replacement']
+    if args['donor_random']:
+        donor_random = True
+    else:
+        donor_random = False
     
-    file_name = f"generations_{generations}_population_{pop_size}_children_{child_size}_selection_{selection_index}_replacement_{replacement_index}"
+    file_name = f"generations_{generations}_population_{pop_size}_donor_random_{donor_random}"
     print(f"Output file name: {file_name}")
 
     # Set up the models and dataset
