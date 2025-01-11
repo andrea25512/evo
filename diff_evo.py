@@ -26,36 +26,36 @@ seen_words = []
 
 template = { 
     "differential_evolution": """### Instructions
-    Follow these steps to improve a given prompt:
-    1. Identify differences between Prompt 1 and Prompt 2.
-    2. Mutate the differing parts by replacing them with alternative phrases.
-    3. Use the mutated parts to modify Prompt 3 and create a new prompt.
-    4. Combine the new prompt with the Basic Prompt to produce a final prompt enclosed in <prompt> and </prompt>.
+Follow these steps to improve a given prompt:
+1. Identify differences between Prompt 1 and Prompt 2.
+2. Mutate the differing parts by replacing them with alternative phrases.
+3. Use the mutated parts to modify Prompt 3 and create a new prompt.
+4. Combine the new prompt with the Basic Prompt to produce a final prompt enclosed in <prompt> and </prompt>.
 
-    ### Example (DO NOT MODIFY)
-    Prompt 1: Rewrite the input text into simpler text.  
-    Prompt 2: Rewrite my complex sentence in simpler terms, but keep the meaning.  
-    Differences: 
-    - "input text" vs "my complex sentence"
-    - "simpler text" vs "simpler terms, but keep the meaning."  
-    Mutations:
-    - "input text" -> "provided text,"
-    - "simpler text" -> "easier language," etc.  
-    Prompt 3: Rewrite the given input text into simpler English sentences while preserving the same meaning.  
-    New Prompt: Transform the provided text into easier language while maintaining the meaning.  
-    Basic Prompt: Make the sentence easier for people who do not speak English fluently.  
-    Final Prompt: <prompt>Convert the difficult sentence into simpler words while preserving the meaning, so it's easier for non-native English speakers to understand.</prompt>  
+### Example (DO NOT MODIFY)
+Prompt 1: Rewrite the input text into simpler text.  
+Prompt 2: Rewrite my complex sentence in simpler terms, but keep the meaning.  
+Differences: 
+- "input text" vs "my complex sentence"
+- "simpler text" vs "simpler terms, but keep the meaning."  
+Mutations:
+- "input text" -> "provided text,"
+- "simpler text" -> "easier language," etc.  
+Prompt 3: Rewrite the given input text into simpler English sentences while preserving the same meaning.  
+New Prompt: Transform the provided text into easier language while maintaining the meaning.  
+Basic Prompt: Make the sentence easier for people who do not speak English fluently.  
+Final Prompt: <prompt>Convert the difficult sentence into simpler words while preserving the meaning, so it's easier for non-native English speakers to understand.</prompt>  
 
-    ### Task
-    Apply the steps to these prompts:
-    Prompt 1: <prompt1>  
-    Prompt 2: <prompt2>  
-    Prompt 3: <prompt3>  
-    Basic Prompt: <prompt0>  
+### Task
+Apply the steps to these prompts:
+Prompt 1: <prompt1>  
+Prompt 2: <prompt2>  
+Prompt 3: <prompt3>  
+Basic Prompt: <prompt0>  
 
-    Output: Final improved prompt enclosed in <prompt> and </prompt>.
-    
-    Your response:
+Output: Final improved prompt enclosed in <prompt> and </prompt>.
+
+Your response:
     """           
 }
 
@@ -158,10 +158,10 @@ def crossover_mutation(model, tokenizer, ea_strategy, text1, text2, text3=None, 
         )
     else:
         raise ValueError("Invalid evolutionary algorithm strategy. Use 'genetic_algorithm' or 'differential_evolution'.")
-    print(request_content)
     inputs = tokenizer(request_content, return_tensors="pt").to(first_device)
     out = model.generate(inputs=inputs.input_ids, max_new_tokens=100)
     output_text = tokenizer.batch_decode(out.cpu(), skip_special_tokens=True)[0]
+    print(get_final_prompt(output_text))
     return get_final_prompt(output_text)
     
 
@@ -299,7 +299,7 @@ if __name__ == "__main__":
     else:
         donor_random = False
     
-    file_name = f"generations_{generations}_population_{pop_size}_donor_random_{donor_random}"
+    file_name = f"de_generations_{generations}_population_{pop_size}_donor_random_{donor_random}"
     print(f"Output file name: {file_name}")
 
     # Set up the models and dataset
@@ -409,8 +409,9 @@ if __name__ == "__main__":
     initial_population = random.sample(initial_population, k=pop_size)
 
     # Run the genetic algorithm
-    best_prompt, best_score = de_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, donor_random=False, file_name=file_name)
-    #mutant = crossover_mutation(alpaca_model, alpaca_tokenizer, "differential_evolution", 'a jpeg corrupted photo of the <tag>.', 'a photo of a nice <tag>.', 'a rendition of the <tag>.', 'a bright photo of a <tag>.')
+    #best_prompt, best_score = de_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, donor_random=False, file_name=file_name)
+    mutant = crossover_mutation(alpaca_model, alpaca_tokenizer, "differential_evolution", 'a jpeg corrupted photo of the <tag>.', 'a photo of a nice <tag>.', 'a rendition of the <tag>.', 'a bright photo of a <tag>.')
+    print(mutant)
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
 
