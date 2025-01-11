@@ -25,6 +25,7 @@ test_images_number = 100
 os.environ["TOKENIZERS_PARALLELISM"] = "true"
 seen_words = []
 niche_threshold = 0.95
+occourance_threshold = 3
 
 template = { 
     "standard": """
@@ -315,75 +316,29 @@ def ga_run(loader, initial_population, clip_model, clip_processor, model, tokeni
                 combined_population = population + children
                 combined_fitness_scores = fitness_scores + children_fitness_scores
 
-                niches = []
-                niches_fitness = []
-                for (prompt, fitness) in zip(combined_population, combined_fitness_scores):
-                    # check if the prompt fits into an existing niche
-                    added_to_niche = False
-                    max_sim = 0
-                    for (niche, niche_fitness) in zip(niches, niches_fitness):
-                        # compare with all prompts of the niche
-                        sim = max([SequenceMatcher(None, prompt, niche_prompt).ratio() for niche_prompt in niche])
-                        if(sim > max_sim):
-                            max_sim = sim
-                        if  sim > niche_threshold:
-                            niche.append(prompt)
-                            niche_fitness.append(fitness)
-                            added_to_niche = True
-                            break
-                    # if no suitable niche exists, create a new one
-                    if not added_to_niche:
-                        print("New niche with: ", prompt, " - max similarity: ",max_sim)
-                        niches.append([prompt])
-                        niches_fitness.append([fitness])
+                # Sort by fitness scores and retain the top N individuals
+                sorted_indices = sorted(range(len(combined_fitness_scores)), key=lambda i: combined_fitness_scores[i], reverse=True)
+                combined_population = [combined_population[i] for i in sorted_indices]
+                combined_fitness_scores = [combined_fitness_scores[i] for i in sorted_indices]
 
-                # calculate average fitness for each niche
-                niche_avg_fitness = [sum(niche_fitness) / len(niche_fitness) if niche_fitness else 0 for niche_fitness in niches_fitness]
-
-                # compute selection probabilities by normalizing average fitness
-                total_avg_fitness = sum(niche_avg_fitness)
-                if total_avg_fitness > 0:
-                    niche_selection_probabilities = [avg_fitness / total_avg_fitness for avg_fitness in niche_avg_fitness]
-                else:
-                    # equal probability if all averages are zero
-                    niche_selection_probabilities = [1 / len(niches) for _ in niches]  
-
-                # determine how many samples to take from each niche
-                niche_sample_counts = [int(round(pop_size * prob)) for prob in niche_selection_probabilities]
-                
-                # adjust sample counts to ensure the total matches pop_size
-                while sum(niche_sample_counts) > pop_size:
-                    # reduce from niches with the lowest selection probabilities
-                    niche_sample_counts[niche_sample_counts.index(max(niche_sample_counts))] -= 1
-                while sum(niche_sample_counts) < pop_size:
-                    # add to niches with the highest selection probabilities
-                    niche_sample_counts[niche_sample_counts.index(min(niche_sample_counts))] += 1
-
-                # Compute selection probabilities by normalizing average fitness
-                total_avg_fitness = sum(niche_avg_fitness)
-                if total_avg_fitness > 0:
-                    niche_selection_probabilities = [avg_fitness / total_avg_fitness for avg_fitness in niche_avg_fitness]
-                else:
-                    # equal probability if all averages are zero
-                    niche_selection_probabilities = [1 / len(niches) for _ in niches]  
-
-                # select prompts and fitness scores for the next generation
                 population = []
                 fitness_scores = []
-
-                for niche, niche_fitness, sample_count in zip(niches, niches_fitness, niche_sample_counts):
-                    # select the top 'sample_count' elements from each niche
-                    if sample_count > 0:
-                        top_indices = sorted(range(len(niche_fitness)), key=lambda i: niche_fitness[i], reverse=True)[:sample_count]
-                        population.extend([niche[i] for i in top_indices])
-                        fitness_scores.extend([niche_fitness[i] for i in top_indices])
-
-                # sort the population and fitness_scores based on fitness
-                sorted_pairs = sorted(zip(population, fitness_scores), key=lambda x: x[1], reverse=True)
-                population, fitness_scores = zip(*sorted_pairs)
-                population = list(population)
-                fitness_scores = list(fitness_scores)
-
+                refused_indexes = []
+                index = 0
+                while(len(population) < pop_size and index < len(combined_population)):
+                    occurrances = np.sum(np.array([SequenceMatcher(None, combined_population[index], pop_prompt).ratio() for pop_prompt in population]) > niche_threshold)
+                    if(occurrances < (pop_size // occourance_threshold)):
+                        population.append(combined_population[index])
+                        fitness_scores.append(combined_fitness_scores[index])
+                    else:
+                        refused_indexes.append(index)
+                    index += 1
+                if(len(population) < pop_size):
+                    print("!###############################################################[ TOO MANY REPETITIONS ]###############################################################!")
+                    # if we selected a lower than necessary amount of individuals, in order to maintain proportional niche, then add randomly previously ignored indexes to the population (and fitness list) untile the desired amount of population is achieved
+                    auxiliary_indexes = random.sample(refused_indexes, k=(pop_size-len(population)))
+                    population = population = [combined_population[i] for i in auxiliary_indexes]
+                    fitness_scores = fitness_scores = [combined_fitness_scores[i] for i in auxiliary_indexes]
             else:
                 raise ValueError("Wrong replacement index")
 
