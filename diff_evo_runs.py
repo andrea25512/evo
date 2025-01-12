@@ -2,13 +2,10 @@ import subprocess
 import re
 
 # Define parameter combinations
-already_ran = [
-    "--generations 10 --population 10 --donor_random",
-    "--generations 10 --population 10",
-    "--generations 10 --population 20 --donor_random",
-]
-
 configs = [
+    #"--generations 10 --population 10 --donor_random",
+    #"--generations 10 --population 10",
+    "--generations 10 --population 20 --donor_random",
     "--generations 10 --population 20",
     "--generations 10 --population 50 --donor_random",
     "--generations 10 --population 50",
