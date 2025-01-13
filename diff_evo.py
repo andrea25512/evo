@@ -1,6 +1,5 @@
 from torch.utils.data import Dataset
 import os
-import random
 import pandas
 from tqdm import tqdm
 from transformers import CLIPProcessor, CLIPModel, BitsAndBytesConfig
@@ -25,22 +24,61 @@ os.environ["TOKENIZERS_PARALLELISM"] = "true"
 seen_words = []
 
 template = { 
-    "differential_evolution": """### Instructions
-Follow these steps to improve a given prompt, without changing its structure:
-1. Identify differences between Prompt 1 and Prompt 2.
-2. Randomly mutate the different parts.
+    "compressed_differential_evolution": """### Instructions
+    Follow these steps to improve a given prompt, without changing its structure:
+    1. Identify differences between Prompt 1 and Prompt 2.
+    2. Randomly mutate the different parts.
+    3. Combine the different parts with Prompt 3, selectively replace it with the different parts in step 2 and generate a new prompt:
+    4. Crossover the prompt in step 3 with the basic prompt and generate a final prompt bracketed with <prompt> and </prompt>:
+
+    ### Task
+    Apply the steps to these prompts, without changing their structure:
+    Prompt 1: <prompt1>  
+    Prompt 2: <prompt2>  
+    Prompt 3: <prompt3>  
+    Basic Prompt: <prompt0>  
+
+    Output: Final improved prompt enclosed in <prompt> and </prompt>.
+    """,
+    "differential_evolution": """Please follow the instruction step-by-step to generate a better prompt.
+1. Identify the different parts between the Prompt 1 and Prompt 2:
+Prompt 1: A photo of the small <tag>.
+Prompt 2: a cropped photo of the <tag>.
+2. Randomly mutate the different parts
+3. Combine the different parts with Prompt 3, selectively replace it with the different parts in step 2 and generate a new prompt.
+Prompt 3: a low resolution photo of the <tag>.
+4. Crossover the prompt in the step3 with the following basic prompt and generate a final prompt bracketed with <prompt> and </prompt>:
+Basic Prompt: a close-up photo of the <tag>.
+
+1. Identifying the different parts between Prompt 1 and Prompt 2:
+Prompt 1: A photo of the small <tag>.
+Prompt 2: a cropped photo of the <tag>.
+Different parts:
+"A photo of the small" vs "a cropped photo of the"
+
+2. Randomly mutate the different parts:
+"A photo of the small" -> "An image of the tiny" 
+"a cropped photo of the" -> "a cut out photo of the"
+
 3. Combine the different parts with Prompt 3, selectively replace it with the different parts in step 2 and generate a new prompt:
-4. Crossover the prompt in step 3 with the basic prompt and generate a final prompt bracketed with <prompt> and </prompt>:
+Prompt 3: a low resolution photo of the <tag>.
+New Prompt: A cut out image of the tiny <tag>.
 
-### Task
-Apply the steps to these prompts, without changing their structure:
-Prompt 1: <prompt1>  
-Prompt 2: <prompt2>  
-Prompt 3: <prompt3>  
-Basic Prompt: <prompt0>  
+4. Crossover the prompt in step 3 with the following basic prompt and generate a final prompt bracketed with <prompt> and </prompt>:
+Basic Prompt: a close-up photo of the <tag>.
+Final Prompt: <prompt>A close-up cut out image of the tiny <tag>.</prompt>
 
-Output: Final improved prompt enclosed in <prompt> and </prompt>.
-    """           
+Please follow the instruction step-by-step to generate a better prompt.
+1. Identify the different parts between the Prompt 1 and Prompt 2:
+Prompt 1: <prompt1>
+Prompt 2: <prompt2>
+2. Randomly mutate the different parts
+3. Combine the different parts with Prompt 3, selectively replace it with the different parts in step2 and generate a new prompt.
+Prompt 3: <prompt3>
+4. Crossover the prompt in the step3 with the following basic prompt and generate a final prompt bracketed with <prompt> and </prompt>:
+Basic Prompt: <prompt0>
+
+1. """
 }
 
 class ImageDataset(Dataset):
@@ -134,16 +172,11 @@ def crossover_mutation(model, tokenizer, ea_strategy, text1, text2, text3=None, 
     if ea_strategy == "genetic_algorithm":
         request_content = template[ea_strategy].replace("<prompt1>", text1).replace("<prompt2>", text2)
     elif ea_strategy == "differential_evolution":
-        request_content = (
-            template[ea_strategy].replace("<prompt0>", text1)
-            .replace("<prompt1>", text2)
-            .replace("<prompt2>", text3)
-            .replace("<prompt3>", text4)
-        )
+        request_content = template[ea_strategy].replace("<prompt0>", text1).replace("<prompt1>", text2).replace("<prompt2>", text3).replace("<prompt3>", text4)
     else:
         raise ValueError("Invalid evolutionary algorithm strategy. Use 'genetic_algorithm' or 'differential_evolution'.")
-    inputs = tokenizer(request_content, return_tensors="pt").to(first_device)
-    out = model.generate(inputs=inputs.input_ids, max_new_tokens=100)
+    inputs = tokenizer(request_content, return_tensors="pt", truncation=True).to(first_device)
+    out = model.generate(inputs=inputs.input_ids, max_new_tokens=512)
     output_text = tokenizer.batch_decode(out.cpu(), skip_special_tokens=True)[0]
     print("Mutant: ", get_final_prompt(output_text))
     return get_final_prompt(output_text)
@@ -215,6 +248,11 @@ def de_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             best_score = max_score
             best_prompt = population[fitness_scores.index(max_score)]
 
+        # re-ordering based on the fitness
+        sorted_indices = sorted(range(len(fitness_scores)), key=lambda i: fitness_scores[i], reverse=True)
+        population = [population[i] for i in sorted_indices]
+        fitness_scores = [fitness_scores[i] for i in sorted_indices]
+
         # Print the current population and fitness scores
         print(f"Best Score in Generation {generation + 1}: {max_score}")
         print("Population and Fitness Scores:")
@@ -223,12 +261,13 @@ def de_run(loader, initial_population, clip_model, clip_processor, model, tokeni
         print("\n")
 
         # Crossover and mutation to generate children
-        for j in tqdm(range(pop_size), desc="Generation"):
-            local_random.seed(j)
-
-            # Generate a mutant by crossover and mutation
-            candidate = population[j]
-            donor1, donor2, donor3 = local_random.sample(population, 3)
+        for i in tqdm(range(pop_size), desc="Generation"):
+            local_random.seed(i)
+            # select each individual
+            candidate = population[i]
+            # select randomly three samples from the list, where the candidate is already excluded
+            donor1, donor2, donor3 = local_random.sample([x for x in population if x != candidate], 3)
+            # the third sampling is not needed if we use the current best prompt as value to which to add the F(rand_1 - rand_2)
             if not donor_random:
                 donor3 = best_prompt
             print(f"Original prompt: {candidate} \nDonors: {donor1}, {donor2}, {donor3}")
@@ -237,8 +276,8 @@ def de_run(loader, initial_population, clip_model, clip_processor, model, tokeni
 
             # Replace the candidate with the mutant if it has a higher fitness score
             if mutant_score > fitness_scores[population.index(candidate)]:
-                population[j] = mutant
-                fitness_scores[j] = mutant_score
+                population[i] = mutant
+                fitness_scores[i] = mutant_score
 
         best_fitness = np.max(fitness_scores)
         average_fitness = np.average(fitness_scores)
@@ -300,8 +339,8 @@ if __name__ == "__main__":
     # Quantization settings
     quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     weights_dir = os.path.normpath(os.path.join(script_dir, "weights/alpaca/"))
-    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(weights_dir, quantization_config=quantization_config)
-    #alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto")
+    #alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(weights_dir, quantization_config=quantization_config)
+    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto")
     print("Model directory: ", weights_dir)
     alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
 
