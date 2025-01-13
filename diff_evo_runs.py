@@ -3,8 +3,8 @@ import re
 
 # Define parameter combinations
 configs = [
-    "--generations 10 --population 10 --donor_random",
-    "--generations 10 --population 10",
+    #"--generations 10 --population 10 --donor_random",
+    #"--generations 10 --population 10",
     "--generations 10 --population 20 --donor_random",
     "--generations 10 --population 20",
     "--generations 10 --population 50 --donor_random",
@@ -29,6 +29,7 @@ for config in configs:
         with open(log_file, "w") as log:
             subprocess.run(
                 command,
+                shell=True,  # Allows string-based commands like in the shell
                 stdout=log,
                 stderr=subprocess.STDOUT,
                 check=True  # Raise exception if the command fails
