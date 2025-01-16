@@ -1,62 +1,577 @@
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 1
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 2
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 0
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 1
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 2
-Running: python3 main.py --generations 10 --population 50 --children 50 --selection 0
-Running: python3 main.py --generations 10 --population 50 --children 50 --selection 1
-Running: python3 main.py --generations 10 --population 50 --children 50 --selection 2
-Running: python3 main.py --generations 10 --population 50 --children 100 --selection 0
-Running: python3 main.py --generations 10 --population 50 --children 100 --selection 1
-Running: python3 main.py --generations 10 --population 50 --children 100 --selection 2
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 0 -replacement 1
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 1 -replacement 1
+Loading checkpoint shards:   0%|          | 0/6 [00:00<?, ?it/s]
+Loading checkpoint shards:  17%|█▋        | 1/6 [00:00<00:02,  2.07it/s]
+Loading checkpoint shards:  33%|███▎      | 2/6 [00:00<00:01,  2.09it/s]
+Loading checkpoint shards:  50%|█████     | 3/6 [00:01<00:01,  1.97it/s]
+Loading checkpoint shards:  67%|██████▋   | 4/6 [00:02<00:01,  1.55it/s]
+Loading checkpoint shards:  83%|████████▎ | 5/6 [00:03<00:00,  1.39it/s]
+Loading checkpoint shards: 100%|██████████| 6/6 [00:03<00:00,  1.55it/s]
+Loading checkpoint shards: 100%|██████████| 6/6 [00:03<00:00,  1.62it/s]
+Model directory:  /home/andrea.ceron/evo/weights/alpaca
+
+Evaluation:   0%|          | 0/10 [00:00<?, ?it/s]
+Evaluation:  10%|█         | 1/10 [00:02<00:20,  2.23s/it]
+Evaluation:  20%|██        | 2/10 [00:04<00:17,  2.14s/it]
+Evaluation:  30%|███       | 3/10 [00:06<00:15,  2.16s/it]
+Evaluation:  40%|████      | 4/10 [00:08<00:12,  2.13s/it]
+Evaluation:  50%|█████     | 5/10 [00:10<00:10,  2.11s/it]
+Evaluation:  60%|██████    | 6/10 [00:12<00:08,  2.14s/it]
+Evaluation:  70%|███████   | 7/10 [00:15<00:06,  2.15s/it]
+Evaluation:  80%|████████  | 8/10 [00:17<00:04,  2.16s/it]
+Evaluation:  90%|█████████ | 9/10 [00:19<00:02,  2.14s/it]
+Evaluation: 100%|██████████| 10/10 [00:21<00:00,  2.15s/it]
+Evaluation: 100%|██████████| 10/10 [00:21<00:00,  2.15s/it]
+=== Generation 1/10 ===
+Best Score in Generation 1: 22.483814239501953
+Population and Fitness Scores:
+  1. a photo of a hard to see <tag>. -> Fitness: 22.4838
+  2. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  3. a photo of the large <tag>. -> Fitness: 22.4511
+  4. a photo of a dirty <tag>. -> Fitness: 20.9457
+  5. a photo of a clean <tag>. -> Fitness: 20.6483
+  6. a blurry photo of the <tag>. -> Fitness: 20.3521
+  7. a plastic <tag>. -> Fitness: 20.2458
+  8. a photo of my <tag>. -> Fitness: 20.0346
+  9. a cartoon <tag>. -> Fitness: 19.2325
+  10. a <tag> in a video game. -> Fitness: 18.6728
+
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Generation:  10%|█         | 1/10 [00:06<01:01,  6.87s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: a photo of a dirty <tag>., a photo of the large <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up low resolution photo of the large <tag>.
+Generation:  20%|██        | 2/10 [00:13<00:54,  6.79s/it]Original prompt: a photo of the large <tag>. 
+Donors: a photo of a hard to see <tag>., a photo of the hard to see <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:20<00:47,  6.84s/it]Original prompt: a photo of a dirty <tag>. 
+Donors: a photo of a clean <tag>., a photo of the large <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up low resolution photo of the large <tag>.
+Generation:  40%|████      | 4/10 [00:27<00:40,  6.80s/it]Original prompt: a photo of a clean <tag>. 
+Donors: A close-up low resolution photo of the large <tag>., a blurry photo of the <tag>., a photo of a hard to see <tag>.
+Mutant:  A blurry image of the tiny <tag>.
+Generation:  50%|█████     | 5/10 [00:34<00:35,  7.10s/it]Original prompt: a blurry photo of the <tag>. 
+Donors: A blurry image of the tiny <tag>., a plastic <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up plastic image of the tiny <tag>.
+Generation:  60%|██████    | 6/10 [00:41<00:27,  6.99s/it]Original prompt: a plastic <tag>. 
+Donors: a photo of the hard to see <tag>., a cartoon <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up cartoon of the <tag>.
+Generation:  70%|███████   | 7/10 [00:48<00:20,  6.85s/it]Original prompt: a photo of my <tag>. 
+Donors: a blurry photo of the <tag>., a photo of the large <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up low resolution photo of the large <tag>.
+Generation:  80%|████████  | 8/10 [00:55<00:13,  6.84s/it]Original prompt: a cartoon <tag>. 
+Donors: A close-up low resolution photo of the large <tag>., a blurry photo of the <tag>., a photo of a hard to see <tag>.
+Mutant:  A blurry image of the tiny <tag>.
+Generation:  90%|█████████ | 9/10 [01:02<00:07,  7.12s/it]Original prompt: a <tag> in a video game. 
+Donors: A close-up low resolution photo of the large <tag>., a blurry photo of the <tag>., a photo of a hard to see <tag>.
+Mutant:  A blurry image of the tiny <tag>.
+Generation: 100%|██████████| 10/10 [01:10<00:00,  7.31s/it]Generation: 100%|██████████| 10/10 [01:10<00:00,  7.05s/it]
+=== Generation 2/10 ===
+Best Score in Generation 2: 22.483814239501953
+Population and Fitness Scores:
+  1. a photo of a hard to see <tag>. -> Fitness: 22.4838
+  2. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  3. a photo of the large <tag>. -> Fitness: 22.4511
+  4. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  5. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  6. A blurry image of the tiny <tag>. -> Fitness: 20.7459
+  7. A blurry image of the tiny <tag>. -> Fitness: 20.7459
+  8. A blurry image of the tiny <tag>. -> Fitness: 20.7459
+  9. a blurry photo of the <tag>. -> Fitness: 20.3521
+  10. a plastic <tag>. -> Fitness: 20.2458
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Original prompt: a photo of a hard to see <tag>. 
+Donors: A blurry image of the tiny <tag>., a plastic <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up plastic image of the tiny <tag>.
+Generation:  10%|█         | 1/10 [00:06<01:01,  6.78s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the large <tag>., a photo of the large <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up image of the large <tag>.
+Generation:  20%|██        | 2/10 [00:14<00:58,  7.29s/it]Original prompt: a photo of the large <tag>. 
+Donors: a photo of a hard to see <tag>., a photo of the hard to see <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:21<00:49,  7.10s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A blurry image of the tiny <tag>., A blurry image of the tiny <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up sharper image of the tiny <tag>.
+Generation:  40%|████      | 4/10 [00:29<00:45,  7.66s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A blurry image of the tiny <tag>., a photo of the large <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up low resolution photo of the tiny <tag>.
+Generation:  50%|█████     | 5/10 [00:36<00:36,  7.34s/it]Original prompt: A blurry image of the tiny <tag>. 
+Donors: A close-up low resolution photo of the large <tag>., a photo of the large <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up image of the large <tag>.
+Generation:  60%|██████    | 6/10 [00:44<00:29,  7.42s/it]Original prompt: A blurry image of the tiny <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the large <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up picture of the tiny <tag>.
+Generation:  70%|███████   | 7/10 [01:03<00:33, 11.22s/it]Original prompt: A blurry image of the tiny <tag>. 
+Donors: A close-up image of the large <tag>., a photo of the hard to see <tag>., a photo of a hard to see <tag>.
+Mutant:  A low resolution photo of the hard to see <tag>.
+Generation:  80%|████████  | 8/10 [01:10<00:19,  9.84s/it]Original prompt: a blurry photo of the <tag>. 
+Donors: A close-up low resolution photo of the large <tag>., A close-up image of the large <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up image of the <tag>.
+Generation:  90%|█████████ | 9/10 [01:17<00:09,  9.17s/it]Original prompt: a plastic <tag>. 
+Donors: A low resolution photo of the hard to see <tag>., A close-up image of the large <tag>., a photo of a hard to see <tag>.
+Mutant:  A close-up high resolution image of the tiny <tag>.
+Generation: 100%|██████████| 10/10 [01:25<00:00,  8.66s/it]Generation: 100%|██████████| 10/10 [01:25<00:00,  8.53s/it]
+=== Generation 3/10 ===
+Best Score in Generation 3: 22.603435516357422
+Population and Fitness Scores:
+  1. A low resolution photo of the hard to see <tag>. -> Fitness: 22.6034
+  2. a photo of a hard to see <tag>. -> Fitness: 22.4838
+  3. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  4. a photo of the large <tag>. -> Fitness: 22.4511
+  5. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  6. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  7. A close-up image of the <tag>. -> Fitness: 21.1680
+  8. A close-up image of the large <tag>. -> Fitness: 21.0878
+  9. A blurry image of the tiny <tag>. -> Fitness: 20.7459
+  10. a plastic <tag>. -> Fitness: 20.2458
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Original prompt: A low resolution photo of the hard to see <tag>. 
+Donors: A close-up image of the large <tag>., a plastic <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A plastic close-up image of the <tag>.
+Generation:  10%|█         | 1/10 [00:07<01:06,  7.35s/it]Original prompt: a photo of a hard to see <tag>. 
+Donors: a photo of the large <tag>., a photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  20%|██        | 2/10 [00:14<00:56,  7.09s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: A low resolution photo of the hard to see <tag>., a photo of a hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up blurred photo of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:23<00:56,  8.07s/it]Original prompt: a photo of the large <tag>. 
+Donors: A close-up low resolution photo of the large <tag>., a photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the hard to see <tag>.
+Generation:  40%|████      | 4/10 [00:31<00:47,  8.00s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: a photo of the large <tag>., a photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  50%|█████     | 5/10 [00:38<00:37,  7.57s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., A close-up image of the <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the <tag>.
+Generation:  60%|██████    | 6/10 [00:47<00:32,  8.21s/it]Original prompt: A close-up image of the <tag>. 
+Donors: a photo of a hard to see <tag>., A blurry image of the tiny <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up blurred image of the tiny <tag>.
+Generation:  70%|███████   | 7/10 [00:56<00:25,  8.48s/it]Original prompt: A close-up image of the large <tag>. 
+Donors: A close-up low resolution photo of the large <tag>., a photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the hard to see <tag>.
+Generation:  80%|████████  | 8/10 [01:04<00:16,  8.30s/it]Original prompt: A blurry image of the tiny <tag>. 
+Donors: a photo of the large <tag>., A close-up low resolution photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the large <tag>.
+Generation:  90%|█████████ | 9/10 [01:11<00:07,  7.87s/it]Original prompt: a plastic <tag>. 
+Donors: A close-up photo of the hard to see <tag>., A close-up low resolution photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution image of the hard to see <tag>.
+Generation: 100%|██████████| 10/10 [01:19<00:00,  7.93s/it]Generation: 100%|██████████| 10/10 [01:19<00:00,  7.96s/it]
+=== Generation 4/10 ===
+Best Score in Generation 4: 22.603435516357422
+Population and Fitness Scores:
+  1. A low resolution photo of the hard to see <tag>. -> Fitness: 22.6034
+  2. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  3. a photo of a hard to see <tag>. -> Fitness: 22.4838
+  4. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  5. a photo of the large <tag>. -> Fitness: 22.4511
+  6. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  7. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  8. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  9. A close-up photo of the hard to see <tag>. -> Fitness: 22.2278
+  10. A close-up image of the <tag>. -> Fitness: 21.1680
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Original prompt: A low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the large <tag>., A close-up image of the <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up image of the <tag>.
+Generation:  10%|█         | 1/10 [00:07<01:08,  7.66s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., a photo of a hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  20%|██        | 2/10 [00:14<00:57,  7.25s/it]Original prompt: a photo of a hard to see <tag>. 
+Donors: A low resolution photo of the hard to see <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A magnified blurred image of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:24<00:58,  8.36s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: a photo of the large <tag>., a photo of a hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  40%|████      | 4/10 [00:31<00:46,  7.78s/it]Original prompt: a photo of the large <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  50%|█████     | 5/10 [00:38<00:37,  7.55s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: a photo of the large <tag>., A close-up low resolution photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the large <tag>.
+Generation:  60%|██████    | 6/10 [00:45<00:29,  7.34s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the hard to see <tag>.
+Generation:  70%|███████   | 7/10 [00:53<00:22,  7.54s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution image of the hard to see <tag>.
+Generation:  80%|████████  | 8/10 [01:02<00:16,  8.09s/it]Original prompt: A close-up photo of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  90%|█████████ | 9/10 [01:09<00:07,  7.80s/it]Original prompt: A close-up image of the <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution picture of the hard to see <tag>.
+Generation: 100%|██████████| 10/10 [01:18<00:00,  8.23s/it]Generation: 100%|██████████| 10/10 [01:18<00:00,  7.88s/it]
+=== Generation 5/10 ===
+Best Score in Generation 5: 22.603435516357422
+Population and Fitness Scores:
+  1. A low resolution photo of the hard to see <tag>. -> Fitness: 22.6034
+  2. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  3. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  4. a photo of a hard to see <tag>. -> Fitness: 22.4838
+  5. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  6. a photo of the large <tag>. -> Fitness: 22.4511
+  7. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  8. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  9. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  10. A close-up low resolution picture of the hard to see <tag>. -> Fitness: 22.0291
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Original prompt: A low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low res picture of the hard to see <tag>.
+Generation:  10%|█         | 1/10 [00:09<01:22,  9.20s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  20%|██        | 2/10 [00:16<01:03,  7.99s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: A low resolution photo of the hard to see <tag>., A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A magnified blurred image of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:26<01:01,  8.83s/it]Original prompt: a photo of a hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution image of the hard to see <tag>.
+Generation:  40%|████      | 4/10 [00:33<00:48,  8.13s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  50%|█████     | 5/10 [00:40<00:39,  7.93s/it]Original prompt: a photo of the large <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  60%|██████    | 6/10 [00:47<00:30,  7.66s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A crystal clear image of the hard to see <tag>.
+Generation:  70%|███████   | 7/10 [00:57<00:24,  8.15s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: a photo of the large <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A magnified image of the minuscule <tag>.
+Generation:  80%|████████  | 8/10 [01:06<00:17,  8.54s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  90%|█████████ | 9/10 [01:14<00:08,  8.26s/it]Original prompt: A close-up low resolution picture of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation: 100%|██████████| 10/10 [01:21<00:00,  8.05s/it]Generation: 100%|██████████| 10/10 [01:21<00:00,  8.17s/it]
+=== Generation 6/10 ===
+Best Score in Generation 6: 22.603435516357422
+Population and Fitness Scores:
+  1. A low resolution photo of the hard to see <tag>. -> Fitness: 22.6034
+  2. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  3. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  4. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  5. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  6. a photo of the large <tag>. -> Fitness: 22.4511
+  7. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  8. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  9. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  10. A close-up low resolution picture of the hard to see <tag>. -> Fitness: 22.0291
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Original prompt: A low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low res picture of the hard to see <tag>.
+Generation:  10%|█         | 1/10 [00:09<01:22,  9.18s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  20%|██        | 2/10 [00:16<01:03,  7.94s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up clear picture of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:26<01:02,  8.87s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  40%|████      | 4/10 [00:33<00:48,  8.16s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  50%|█████     | 5/10 [00:40<00:39,  7.95s/it]Original prompt: a photo of the large <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  60%|██████    | 6/10 [00:48<00:30,  7.68s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A crystal clear image of the hard to see <tag>.
+Generation:  70%|███████   | 7/10 [00:57<00:24,  8.18s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: a photo of the large <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A magnified image of the minuscule <tag>.
+Generation:  80%|████████  | 8/10 [01:06<00:17,  8.59s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  90%|█████████ | 9/10 [01:14<00:08,  8.31s/it]Original prompt: A close-up low resolution picture of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation: 100%|██████████| 10/10 [01:22<00:00,  8.12s/it]Generation: 100%|██████████| 10/10 [01:22<00:00,  8.21s/it]
+=== Generation 7/10 ===
+Best Score in Generation 7: 22.603435516357422
+Population and Fitness Scores:
+  1. A low resolution photo of the hard to see <tag>. -> Fitness: 22.6034
+  2. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  3. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  4. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  5. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  6. a photo of the large <tag>. -> Fitness: 22.4511
+  7. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  8. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  9. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  10. A close-up low resolution picture of the hard to see <tag>. -> Fitness: 22.0291
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Original prompt: A low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low res picture of the hard to see <tag>.
+Generation:  10%|█         | 1/10 [00:09<01:22,  9.19s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  20%|██        | 2/10 [00:16<01:03,  7.99s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up clear picture of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:26<01:01,  8.85s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  40%|████      | 4/10 [00:33<00:49,  8.18s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  50%|█████     | 5/10 [00:41<00:40,  8.00s/it]Original prompt: a photo of the large <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  60%|██████    | 6/10 [00:48<00:30,  7.68s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A crystal clear image of the hard to see <tag>.
+Generation:  70%|███████   | 7/10 [00:57<00:24,  8.19s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: a photo of the large <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A magnified image of the minuscule <tag>.
+Generation:  80%|████████  | 8/10 [01:06<00:17,  8.57s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  90%|█████████ | 9/10 [01:14<00:08,  8.26s/it]Original prompt: A close-up low resolution picture of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation: 100%|██████████| 10/10 [01:21<00:00,  8.06s/it]Generation: 100%|██████████| 10/10 [01:21<00:00,  8.19s/it]
+=== Generation 8/10 ===
+Best Score in Generation 8: 22.603435516357422
+Population and Fitness Scores:
+  1. A low resolution photo of the hard to see <tag>. -> Fitness: 22.6034
+  2. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  3. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  4. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  5. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  6. a photo of the large <tag>. -> Fitness: 22.4511
+  7. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  8. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  9. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  10. A close-up low resolution picture of the hard to see <tag>. -> Fitness: 22.0291
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Original prompt: A low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low res picture of the hard to see <tag>.
+Generation:  10%|█         | 1/10 [00:09<01:23,  9.26s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  20%|██        | 2/10 [00:16<01:04,  8.03s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up clear picture of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:26<01:02,  8.91s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  40%|████      | 4/10 [00:33<00:49,  8.19s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  50%|█████     | 5/10 [00:41<00:40,  8.00s/it]Original prompt: a photo of the large <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  60%|██████    | 6/10 [00:48<00:30,  7.71s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A crystal clear image of the hard to see <tag>.
+Generation:  70%|███████   | 7/10 [00:57<00:24,  8.19s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: a photo of the large <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A magnified image of the minuscule <tag>.
+Generation:  80%|████████  | 8/10 [01:06<00:17,  8.60s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  90%|█████████ | 9/10 [01:14<00:08,  8.30s/it]Original prompt: A close-up low resolution picture of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation: 100%|██████████| 10/10 [01:22<00:00,  8.08s/it]Generation: 100%|██████████| 10/10 [01:22<00:00,  8.22s/it]
+=== Generation 9/10 ===
+Best Score in Generation 9: 22.603435516357422
+Population and Fitness Scores:
+  1. A low resolution photo of the hard to see <tag>. -> Fitness: 22.6034
+  2. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  3. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  4. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  5. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  6. a photo of the large <tag>. -> Fitness: 22.4511
+  7. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  8. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  9. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  10. A close-up low resolution picture of the hard to see <tag>. -> Fitness: 22.0291
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Original prompt: A low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low res picture of the hard to see <tag>.
+Generation:  10%|█         | 1/10 [00:09<01:23,  9.28s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  20%|██        | 2/10 [00:16<01:04,  8.08s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up clear picture of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:26<01:02,  8.91s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  40%|████      | 4/10 [00:33<00:49,  8.22s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  50%|█████     | 5/10 [00:41<00:39,  7.99s/it]Original prompt: a photo of the large <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  60%|██████    | 6/10 [00:48<00:30,  7.70s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A crystal clear image of the hard to see <tag>.
+Generation:  70%|███████   | 7/10 [00:57<00:24,  8.21s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: a photo of the large <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A magnified image of the minuscule <tag>.
+Generation:  80%|████████  | 8/10 [01:06<00:17,  8.58s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  90%|█████████ | 9/10 [01:14<00:08,  8.26s/it]Original prompt: A close-up low resolution picture of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation: 100%|██████████| 10/10 [01:22<00:00,  8.05s/it]Generation: 100%|██████████| 10/10 [01:22<00:00,  8.21s/it]
+=== Generation 10/10 ===
+Best Score in Generation 10: 22.603435516357422
+Population and Fitness Scores:
+  1. A low resolution photo of the hard to see <tag>. -> Fitness: 22.6034
+  2. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  3. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  4. A close-up low resolution image of the hard to see <tag>. -> Fitness: 22.5038
+  5. a photo of the hard to see <tag>. -> Fitness: 22.4540
+  6. a photo of the large <tag>. -> Fitness: 22.4511
+  7. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  8. A close-up low resolution photo of the hard to see <tag>. -> Fitness: 22.3969
+  9. A close-up low resolution photo of the large <tag>. -> Fitness: 22.3377
+  10. A close-up low resolution picture of the hard to see <tag>. -> Fitness: 22.0291
+
+
+Generation:   0%|          | 0/10 [00:00<?, ?it/s]Original prompt: A low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low res picture of the hard to see <tag>.
+Generation:  10%|█         | 1/10 [00:09<01:23,  9.28s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  20%|██        | 2/10 [00:16<01:04,  8.02s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: A close-up low resolution picture of the hard to see <tag>., A low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up clear picture of the hard to see <tag>.
+Generation:  30%|███       | 3/10 [00:26<01:02,  8.92s/it]Original prompt: A close-up low resolution image of the hard to see <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  40%|████      | 4/10 [00:33<00:49,  8.23s/it]Original prompt: a photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  50%|█████     | 5/10 [00:41<00:40,  8.03s/it]Original prompt: a photo of the large <tag>. 
+Donors: a photo of the hard to see <tag>., A close-up low resolution photo of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up low resolution photo of the hard to see <tag>.
+Generation:  60%|██████    | 6/10 [00:48<00:30,  7.73s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A crystal clear image of the hard to see <tag>.
+Generation:  70%|███████   | 7/10 [00:57<00:24,  8.23s/it]Original prompt: A close-up low resolution photo of the hard to see <tag>. 
+Donors: a photo of the large <tag>., A close-up low resolution image of the hard to see <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A magnified image of the minuscule <tag>.
+Generation:  80%|████████  | 8/10 [01:07<00:17,  8.59s/it]Original prompt: A close-up low resolution photo of the large <tag>. 
+Donors: A close-up low resolution image of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation:  90%|█████████ | 9/10 [01:14<00:08,  8.30s/it]Original prompt: A close-up low resolution picture of the hard to see <tag>. 
+Donors: A close-up low resolution photo of the hard to see <tag>., a photo of the large <tag>., A low resolution photo of the hard to see <tag>.
+Mutant:  A close-up photo of the tiny <tag>.
+Generation: 100%|██████████| 10/10 [01:22<00:00,  8.10s/it]Generation: 100%|██████████| 10/10 [01:22<00:00,  8.24s/it]
+Best Prompt: A low resolution photo of the hard to see <tag>.
+Best Score: 22.603435516357422
+Running: python3 diff_evo.py -g 10 -p 10 -d
+Running: python3 diff_evo.py -g 10 -p 10
+Running: python3 diff_evo.py -g 10 -p 20 -d
+Running: python3 diff_evo.py -g 10 -p 20
+Running: python3 diff_evo.py -g 10 -p 50 -d
+Running: python3 diff_evo.py -g 10 -p 50
+Running: python3 diff_evo.py -g 10 -p 100 -d
+Running: python3 diff_evo.py -g 10 -p 100
+Running: python diff_evo.py -g 10 -p 10 -d
+Running: python diff_evo.py -g 10 -p 20 -d
+Error running command: Command 'python diff_evo.py -g 10 -p 20 -d' returned non-zero exit status 1.
+Running: python diff_evo.py -g 10 -p 50 -d
+Error running command: Command 'python diff_evo.py -g 10 -p 50 -d' returned non-zero exit status 1.
+Running: python diff_evo.py -g 10 -p 100 -d
+Error running command: Command 'python diff_evo.py -g 10 -p 100 -d' returned non-zero exit status 1.
+Running: python diff_evo.py -g 10 -p 100
+Running: python diff_evo.py -g 10 -p 10 -d
 Traceback (most recent call last):
-  File "/usr/lib/python3.10/subprocess.py", line 1209, in wait
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
     return self._wait(timeout=timeout)
-  File "/usr/lib/python3.10/subprocess.py", line 1959, in _wait
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2053, in _wait
     (pid, sts) = self._try_wait(0)
-  File "/usr/lib/python3.10/subprocess.py", line 1917, in _try_wait
+                 ^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2011, in _try_wait
     (pid, sts) = os.waitpid(self.pid, wait_flags)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 KeyboardInterrupt
 
 During handling of the above exception, another exception occurred:
 
 Traceback (most recent call last):
-  File "/home/andrea.ceron/evo/run.py", line 34, in <module>
+  File "/home/andrea.ceron/evo/diff_evo_runs.py", line 26, in <module>
     subprocess.run(
-  File "/usr/lib/python3.10/subprocess.py", line 505, in run
+  File "/usr/lib/python3.12/subprocess.py", line 550, in run
     stdout, stderr = process.communicate(input, timeout=timeout)
-  File "/usr/lib/python3.10/subprocess.py", line 1146, in communicate
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1201, in communicate
     self.wait()
-  File "/usr/lib/python3.10/subprocess.py", line 1222, in wait
+  File "/usr/lib/python3.12/subprocess.py", line 1277, in wait
     self._wait(timeout=sigint_timeout)
-  File "/usr/lib/python3.10/subprocess.py", line 1953, in _wait
+  File "/usr/lib/python3.12/subprocess.py", line 2047, in _wait
     time.sleep(delay)
 KeyboardInterrupt
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 0 --replacement 1
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 1 --replacement 1
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 2 --replacement 1
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 0 --replacement 1
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 1 --replacement 1
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 2 --replacement 1
-Running: python3 main.py --generations 10 --population 50 --children 50 --selection 0 --replacement 1
-Running: python3 main.py --generations 10 --population 50 --children 50 --selection 1 --replacement 1
-Running: python3 main.py --generations 10 --population 50 --children 50 --selection 2 --replacement 1
-Running: python3 main.py --generations 10 --population 50 --children 100 --selection 0 --replacement 1
-Running: python3 main.py --generations 10 --population 50 --children 100 --selection 1 --replacement 1
-Running: python3 main.py --generations 10 --population 50 --children 100 --selection 2 --replacement 1
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 0 --replacement 1
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 0 --replacement 1
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 0 --replacement 2
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 1 --replacement 2
-Running: python3 main.py --generations 10 --population 10 --children 10 --selection 2 --replacement 2
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 0 --replacement 2
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 1 --replacement 2
-Running: python3 main.py --generations 10 --population 10 --children 20 --selection 2 --replacement 2
-Running: python3 main.py --generations 10 --population 50 --children 50 --selection 0 --replacement 2
-Running: python3 main.py --generations 10 --population 50 --children 50 --selection 1 --replacement 2
-Running: python3 main.py --generations 10 --population 50 --children 50 --selection 2 --replacement 2
-Running: python3 main.py --generations 10 --population 50 --children 100 --selection 0 --replacement 2
-Running: python3 main.py --generations 10 --population 50 --children 100 --selection 1 --replacement 2
-Running: python3 main.py --generations 10 --population 50 --children 100 --selection 2 --replacement 2
+Running: python diff_evo.py -g 10 -p 10 -d
+Traceback (most recent call last):
+  File "/home/andrea.ceron/evo/diff_evo_runs.py", line 26, in <module>
+    subprocess.run(
+  File "/usr/lib/python3.12/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1201, in communicate
+    self.wait()
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2053, in _wait
+    (pid, sts) = self._try_wait(0)
+                 ^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2011, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+Running: python diff_evo.py -g 10 -p 10 -d
+Running: python diff_evo.py -g 10 -p 20 -d
+Running: python diff_evo.py -g 10 -p 50 -d
+Traceback (most recent call last):
+  File "/usr/lib/python3.12/subprocess.py", line 1264, in wait
+    return self._wait(timeout=timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2053, in _wait
+    (pid, sts) = self._try_wait(0)
+                 ^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 2011, in _try_wait
+    (pid, sts) = os.waitpid(self.pid, wait_flags)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/andrea.ceron/evo/diff_evo_runs.py", line 26, in <module>
+    subprocess.run(
+  File "/usr/lib/python3.12/subprocess.py", line 550, in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 1201, in communicate
+    self.wait()
+  File "/usr/lib/python3.12/subprocess.py", line 1277, in wait
+    self._wait(timeout=sigint_timeout)
+  File "/usr/lib/python3.12/subprocess.py", line 2047, in _wait
+    time.sleep(delay)
+KeyboardInterrupt
+Running: python diff_evo.py -g 10 -p 50 -d
+Running: python diff_evo.py -g 10 -p 100 -d

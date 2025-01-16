@@ -2,7 +2,7 @@ import subprocess
 import re
 
 # Define parameter combinations
-configs = [
+configs1 = [
     "--generations 10 --population 10 --children 10 --selection 0 --replacement 2",
     "--generations 10 --population 10 --children 10 --selection 1 --replacement 2",
     "--generations 10 --population 10 --children 10 --selection 2 --replacement 2",
@@ -17,14 +17,25 @@ configs = [
     "--generations 10 --population 50 --children 100 --selection 2 --replacement 2"
 ]
 
+configs2 = [
+    "-g 10 -p 10 -d",
+    "-g 10 -p 10",
+    "-g 10 -p 20 -d",
+    "-g 10 -p 20",
+    "-g 10 -p 50 -d",
+    "-g 10 -p 50",
+    "-g 10 -p 100 -d",
+    "-g 10 -p 100"
+]
+
 # Iterate over each configuration and execute the script sequentially
-for config in configs:
+for config in configs2:
     # Create a unique log file name based on the parameters
     log_file = "run_" + config.replace(" ", "_").replace("=", "_") + ".out"
     log_file = re.sub(r'[^\w\-]', '_', log_file)
     
     # Build the full command
-    command = f"python3 main.py {config}"
+    command = f"python3 diff_evo.py {config}"
     
     print(f"Running: {command}")
     

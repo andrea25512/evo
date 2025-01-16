@@ -270,6 +270,8 @@ def de_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             # the third sampling is not needed if we use the current best prompt as value to which to add the F(rand_1 - rand_2)
             if not donor_random:
                 donor3 = best_prompt
+            else:
+                print("donor_random")
             print(f"Original prompt: {candidate} \nDonors: {donor1}, {donor2}, {donor3}")
             mutant = crossover_mutation(model, tokenizer, ea_strategy, candidate, donor1, donor2, donor3)
             mutant_score = get_fitness(loader, mutant, clip_model, clip_processor)
@@ -433,10 +435,35 @@ if __name__ == "__main__":
         'a tattoo of the <tag>.',
     ]
 
+    extended_population = [
+        "a vintage photo of the <tag>.",
+        "a hyper-realistic painting of a <tag>.",
+        "a minimalist sketch of the <tag>.",
+        "a surreal rendering of a <tag>.",
+        "an abstract painting of the <tag>.",
+        "a futuristic version of a <tag>.",
+        "a steampunk-style <tag>.",
+        "a photo of a broken <tag>.",
+        "a 3D printed <tag>.",
+        "a hand-drawn comic of the <tag>.",
+        "a distorted photo of a <tag>.",
+        "a high contrast photo of the <tag>.",
+        "a holographic image of a <tag>.",
+        "a stop-motion model of the <tag>.",
+        "an anime-style drawing of the <tag>.",
+        "a watercolor painting of the <tag>.",
+        "a cyberpunk depiction of a <tag>.",
+        "a clay sculpture of the <tag>.",
+        "a digital collage featuring a <tag>.",
+        "a neon sign shaped like the <tag>."
+    ]
+
+    if(pop_size > 80):
+        initial_population = initial_population + extended_population
     initial_population = random.sample(initial_population, k=pop_size)
 
     # Run the genetic algorithm
-    best_prompt, best_score = de_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, donor_random=False, file_name=file_name)
+    best_prompt, best_score = de_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, donor_random=donor_random, file_name=file_name)
     #mutant = crossover_mutation(alpaca_model, alpaca_tokenizer, "differential_evolution", 'a jpeg corrupted photo of the <tag>.', 'a photo of a nice <tag>.', 'a rendition of the <tag>.', 'a bright photo of a <tag>.')
     #print(mutant)
     print(f"Best Prompt: {best_prompt}")

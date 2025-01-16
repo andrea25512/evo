@@ -3,14 +3,8 @@ import re
 
 # Define parameter combinations
 configs = [
-    #"--generations 10 --population 10 --donor_random",
-    #"--generations 10 --population 10",
-    "--generations 10 --population 20 --donor_random",
-    "--generations 10 --population 20",
-    "--generations 10 --population 50 --donor_random",
-    "--generations 10 --population 50",
-    "--generations 10 --population 100 --donor_random",
-    "--generations 10 --population 100",
+    "-g 10 -p 50 -d",
+    "-g 10 -p 100 -d"
 ]
 
 
