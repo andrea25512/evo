@@ -83,6 +83,45 @@ class ImageDataset(Dataset):
 
         return (image, label)
 
+class ImageDatasetFlowers(Dataset):
+    def __init__(self, images_root, csv_location, processor):
+        image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp')
+
+        # Collect paths to all valid image files
+        self.image_files = []
+        for root, _, files in os.walk(os.path.join(script_dir, images_root)):
+            for file in files:
+                if file.lower().endswith(image_extensions):
+                    self.image_files.append(os.path.join(root, file))
+
+        self.map = pandas.read_csv(os.path.join(script_dir, csv_location))
+        self.processor = processor
+
+    def __len__(self):
+        return len(self.image_files)
+
+    def __getitem__(self, index):
+        # Process the image
+        image = self.processor(
+            images=Image.open(self.image_files[index]).convert('RGB'),
+            return_tensors="pt"
+        )['pixel_values'][0]
+
+        # Extract and normalize the file ID
+        file_id = self.image_files[index].split("/")[-1].strip().lower()
+        self.map["id"] = self.map["id"].str.strip().str.lower()
+        print(file_id)
+
+        # Find the matching description
+        matches = self.map[self.map.id == file_id]
+        if not matches.empty:
+            label = matches.description.iloc[0]
+            print(label)
+        else:
+            label = "Unknown"  # Handle unmatched cases
+
+        return (image, label)
+
 # ====================================================
 # SECTION: Utility functions
 # ====================================================
@@ -380,7 +419,8 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--generations', type=int, help='Generation amount', default=10)
     parser.add_argument('-s', '--selection', type=int, help='Selection index', default=0)
     parser.add_argument('-r', '--replacement', type=int, help='Replacement index', default=0) # zero fixed for now as only elitism is avelable
-
+    parser.add_argument('-f', '--flowers', action='store_true', help='Enable flower dataset')
+    
     args = vars(parser.parse_args())
 
     generations = args['generations']
@@ -388,8 +428,14 @@ if __name__ == "__main__":
     child_size = args['children']
     selection_index = args['selection']
     replacement_index = args['replacement']
+    if args['flowers']:
+        flowers = True
+    else:
+        flowers = False
     
     file_name = f"generations_{generations}_population_{pop_size}_children_{child_size}_selection_{selection_index}_replacement_{replacement_index}"
+    if(flowers):
+        file_name += "flowers_"
     print(f"Output file name: {file_name}")
 
     # Set up the models and dataset
@@ -407,7 +453,10 @@ if __name__ == "__main__":
     print("Model directory: ", weights_dir)
     alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
 
-    dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
+    if(flowers):
+        dataset = ImageDataset("data/102flowers", "labels.csv", clip_processor)
+    else:
+        dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
     # LEAVE THE BATCH SIZE AND NUMBER OF WORKERS TO 1!!!!!!!!!!!
     loader = DataLoader(test_samples, batch_size=1, shuffle=False, num_workers=1)
