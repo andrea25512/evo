@@ -3,18 +3,41 @@ import re
 
 # Define parameter combinations
 configs1 = [
-    "--generations 10 --population 10 --children 10 --selection 0 --replacement 2",
-    "--generations 10 --population 10 --children 10 --selection 1 --replacement 2",
-    "--generations 10 --population 10 --children 10 --selection 2 --replacement 2",
-    "--generations 10 --population 10 --children 20 --selection 0 --replacement 2",
-    "--generations 10 --population 10 --children 20 --selection 1 --replacement 2",
-    "--generations 10 --population 10 --children 20 --selection 2 --replacement 2",
-    "--generations 10 --population 50 --children 50 --selection 0 --replacement 2",
-    "--generations 10 --population 50 --children 50 --selection 1 --replacement 2",
-    "--generations 10 --population 50 --children 50 --selection 2 --replacement 2",
-    "--generations 10 --population 50 --children 100 --selection 0 --replacement 2",
-    "--generations 10 --population 50 --children 100 --selection 1 --replacement 2",
-    "--generations 10 --population 50 --children 100 --selection 2 --replacement 2"
+    "-f -g 10 -p 10 -c 10 -s 0 -r 1",
+    "-f -g 10 -p 10 -c 10 -s 0 -r 2",
+    "-f -g 10 -p 10 -c 10 -s 1 -r 0",
+    "-f -g 10 -p 10 -c 10 -s 1 -r 1",
+    "-f -g 10 -p 10 -c 10 -s 1 -r 2",
+    "-f -g 10 -p 10 -c 10 -s 2 -r 0",
+    "-f -g 10 -p 10 -c 10 -s 2 -r 1",
+    "-f -g 10 -p 10 -c 10 -s 2 -r 2",
+    "-f -g 10 -p 10 -c 20 -s 0 -r 0",
+    "-f -g 10 -p 10 -c 20 -s 0 -r 1",
+    "-f -g 10 -p 10 -c 20 -s 0 -r 2",
+    "-f -g 10 -p 10 -c 20 -s 1 -r 0",
+    "-f -g 10 -p 10 -c 20 -s 1 -r 1",
+    "-f -g 10 -p 10 -c 20 -s 1 -r 2",
+    "-f -g 10 -p 10 -c 20 -s 2 -r 0",
+    "-f -g 10 -p 10 -c 20 -s 2 -r 1",
+    "-f -g 10 -p 10 -c 20 -s 2 -r 2",
+    "-f -g 10 -p 50 -c 50 -s 0 -r 0",
+    "-f -g 10 -p 50 -c 50 -s 0 -r 1",
+    "-f -g 10 -p 50 -c 50 -s 0 -r 2",
+    "-f -g 10 -p 50 -c 50 -s 1 -r 0",
+    "-f -g 10 -p 50 -c 50 -s 1 -r 1",
+    "-f -g 10 -p 50 -c 50 -s 1 -r 2",
+    "-f -g 10 -p 50 -c 50 -s 2 -r 0",
+    "-f -g 10 -p 50 -c 50 -s 2 -r 1",
+    "-f -g 10 -p 50 -c 50 -s 2 -r 2",
+    "-f -g 10 -p 50 -c 100 -s 0 -r 0",
+    "-f -g 10 -p 50 -c 100 -s 0 -r 1",
+    "-f -g 10 -p 50 -c 100 -s 0 -r 2",
+    "-f -g 10 -p 50 -c 100 -s 1 -r 0",
+    "-f -g 10 -p 50 -c 100 -s 1 -r 1",
+    "-f -g 10 -p 50 -c 100 -s 1 -r 2",
+    "-f -g 10 -p 50 -c 100 -s 2 -r 0",
+    "-f -g 10 -p 50 -c 100 -s 2 -r 1",
+    "-f -g 10 -p 50 -c 100 -s 2 -r 2"
 ]
 
 configs2 = [
@@ -29,13 +52,13 @@ configs2 = [
 ]
 
 # Iterate over each configuration and execute the script sequentially
-for config in configs2:
+for config in configs1:
     # Create a unique log file name based on the parameters
     log_file = "run_" + config.replace(" ", "_").replace("=", "_") + ".out"
     log_file = re.sub(r'[^\w\-]', '_', log_file)
     
     # Build the full command
-    command = f"python3 diff_evo.py {config}"
+    command = f"python3 main.py {config}"
     
     print(f"Running: {command}")
     

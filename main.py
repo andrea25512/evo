@@ -60,6 +60,8 @@ class ImageDataset(Dataset):
         self.map = pandas.read_csv(os.path.join(script_dir, csv_location))
         self.processor = processor
 
+        print("LENGHT: ", len(self.image_files))
+
     def __len__(self):
         return len(self.image_files)
 
@@ -435,7 +437,7 @@ if __name__ == "__main__":
     
     file_name = f"generations_{generations}_population_{pop_size}_children_{child_size}_selection_{selection_index}_replacement_{replacement_index}"
     if(flowers):
-        file_name += "flowers_"
+        file_name = "flowers_" + file_name
     print(f"Output file name: {file_name}")
 
     # Set up the models and dataset
