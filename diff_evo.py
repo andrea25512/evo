@@ -62,11 +62,11 @@ Different parts:
 
 3. Combine the different parts with Prompt 3, selectively replace it with the different parts in step 2 and generate a new prompt:
 Prompt 3: a low resolution photo of the <tag>.
-New Prompt: A cut out image of the tiny <tag>.
+New Prompt: A cut out low resolution image of the tiny <tag>.
 
 4. Crossover the prompt in step 3 with the following basic prompt and generate a final prompt bracketed with <prompt> and </prompt>:
 Basic Prompt: a close-up photo of the <tag>.
-Final Prompt: <prompt>A close-up cut out image of the tiny <tag>.</prompt>
+Final Prompt: <prompt>A close-up cut out low resolution image of the tiny <tag>.</prompt>
 
 Please follow the instruction step-by-step to generate a better prompt.
 1. Identify the different parts between the Prompt 1 and Prompt 2:
@@ -113,6 +113,45 @@ class ImageDataset(Dataset):
         matches = self.map[self.map.id == file_id]
         if not matches.empty:
             label = matches.description.iloc[0]
+        else:
+            label = "Unknown"  # Handle unmatched cases
+
+        return (image, label)
+
+class ImageDatasetFlowers(Dataset):
+    def __init__(self, images_root, csv_location, processor):
+        image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp')
+
+        # Collect paths to all valid image files
+        self.image_files = []
+        for root, _, files in os.walk(os.path.join(script_dir, images_root)):
+            for file in files:
+                if file.lower().endswith(image_extensions):
+                    self.image_files.append(os.path.join(root, file))
+
+        self.map = pandas.read_csv(os.path.join(script_dir, csv_location))
+        self.processor = processor
+
+    def __len__(self):
+        return len(self.image_files)
+
+    def __getitem__(self, index):
+        # Process the image
+        image = self.processor(
+            images=Image.open(self.image_files[index]).convert('RGB'),
+            return_tensors="pt"
+        )['pixel_values'][0]
+
+        # Extract and normalize the file ID
+        file_id = self.image_files[index].split("/")[-1].strip().lower()
+        self.map["id"] = self.map["id"].str.strip().str.lower()
+        print(file_id)
+
+        # Find the matching description
+        matches = self.map[self.map.id == file_id]
+        if not matches.empty:
+            label = matches.description.iloc[0]
+            print(label)
         else:
             label = "Unknown"  # Handle unmatched cases
 
@@ -318,6 +357,7 @@ if __name__ == "__main__":
     parser.add_argument('-p', '--population', type=int, help='Population amount', default=10)
     parser.add_argument('-g', '--generations', type=int, help='Generation amount', default=10)
     parser.add_argument('-d', '--donor_random', action='store_true', help='Enable random donor')
+    parser.add_argument('-f', '--flowers', action='store_true', help='Enable flower dataset')
 
     args = vars(parser.parse_args())
 
@@ -327,8 +367,14 @@ if __name__ == "__main__":
         donor_random = True
     else:
         donor_random = False
+    if args['flowers']:
+        flowers = True
+    else:
+        flowers = False
     
     file_name = f"de_generations_{generations}_population_{pop_size}_donor_random_{donor_random}"
+    if(flowers):
+        file_name = "flowers_" + file_name
     print(f"Output file name: {file_name}")
 
     # Set up the models and dataset
@@ -346,7 +392,10 @@ if __name__ == "__main__":
     print("Model directory: ", weights_dir)
     alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
 
-    dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
+    if(flowers):
+        dataset = ImageDataset("data/102flowers", "labels.csv", clip_processor)
+    else:
+        dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
     # LEAVE THE BATCH SIZE AND NUMBER OF WORKERS TO 1!!!!!!!!!!!
     loader = DataLoader(test_samples, batch_size=1, shuffle=False, num_workers=1)

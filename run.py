@@ -40,6 +40,10 @@ configs1 = [
     "-f -g 10 -p 50 -c 100 -s 2 -r 2"
 ]
 
+configs11 = [
+    "-f -g 10 -p 50 -c 50 -s 0 -r 0"
+]
+
 configs2 = [
     "-g 10 -p 10 -d",
     "-g 10 -p 10",
@@ -52,7 +56,7 @@ configs2 = [
 ]
 
 # Iterate over each configuration and execute the script sequentially
-for config in configs1:
+for config in configs11:
     # Create a unique log file name based on the parameters
     log_file = "run_" + config.replace(" ", "_").replace("=", "_") + ".out"
     log_file = re.sub(r'[^\w\-]', '_', log_file)
