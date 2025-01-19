@@ -3,8 +3,22 @@ import re
 
 # Define parameter combinations
 configs = [
+    "-g 10 -p 10 -d",
+    "-g 10 -p 20",
+    "-g 10 -p 20 -d",
+    "-g 10 -p 50",
     "-g 10 -p 50 -d",
-    "-g 10 -p 100 -d"
+    "-g 10 -p 100",
+    "-g 10 -p 100 -d",
+    
+    "-g 10 -p 10 -f",
+    "-g 10 -p 10 -f -d",
+    "-g 10 -p 20 -f",
+    "-g 10 -p 20 -f -d",
+    "-g 10 -p 50 -f",
+    "-g 10 -p 50 -f -d",
+    "-g 10 -p 100 -f",
+    "-g 10 -p 100 -f -d"
 ]
 
 
