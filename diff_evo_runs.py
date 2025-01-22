@@ -3,7 +3,6 @@ import re
 
 # Define parameter combinations
 configs = [
-    "-g 10 -p 10 -d",
     "-g 10 -p 20",
     "-g 10 -p 20 -d",
     "-g 10 -p 50",

@@ -17,7 +17,7 @@ import random
 
 script_dir = os.path.abspath(os.path.dirname(__file__))
 
-file_name = "de_generations_10_population_20_donor_random_True"
+file_name = "flowers_generations_10_population_50_children_50_selection_0_replacement_2"
 
 data = pandas.read_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), header=None)
 

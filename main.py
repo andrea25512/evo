@@ -82,11 +82,13 @@ class ImageDataset(Dataset):
             label = matches.description.iloc[0]
         else:
             label = "Unknown"  # Handle unmatched cases
+            print("Unknown: ", file_id)
 
         return (image, label)
 
 class ImageDatasetFlowers(Dataset):
     def __init__(self, images_root, csv_location, processor):
+        print("Flowers selected!")
         image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp')
 
         # Collect paths to all valid image files
@@ -110,17 +112,55 @@ class ImageDatasetFlowers(Dataset):
         )['pixel_values'][0]
 
         # Extract and normalize the file ID
-        file_id = self.image_files[index].split("/")[-1].strip().lower()
-        self.map["id"] = self.map["id"].str.strip().str.lower()
-        print(file_id)
+        file_id = self.image_files[index].split("/")[-1]
 
         # Find the matching description
-        matches = self.map[self.map.id == file_id]
+        matches = self.map.loc[self.map['id'] == file_id]
         if not matches.empty:
             label = matches.description.iloc[0]
-            print(label)
         else:
             label = "Unknown"  # Handle unmatched cases
+            print("Unknown: ", file_id)
+
+        return (image, label)
+
+class ImageDatasetPlanes(Dataset):
+    def __init__(self, images_root, csv_location, processor):
+        print("Planes selected!")
+        image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp')
+
+        # Collect paths to all valid image files
+        self.image_files = []
+        for root, _, files in os.walk(os.path.join(script_dir, images_root)):
+            for file in files:
+                if file.lower().endswith(image_extensions):
+                    self.image_files.append(os.path.join(root, file))
+
+        self.map = pandas.read_csv(os.path.join(script_dir, csv_location))
+        self.processor = processor
+
+        print("LENGHT: ", len(self.image_files))
+
+    def __len__(self):
+        return len(self.image_files)
+
+    def __getitem__(self, index):
+        # Process the image
+        image = self.processor(
+            images=Image.open(self.image_files[index]).convert('RGB'),
+            return_tensors="pt"
+        )['pixel_values'][0]
+
+        # Extract and normalize the file ID
+        file_id = int(self.image_files[index].split("/")[-1].strip().lower()[:-4])
+        
+        # Find the matching description
+        matches = self.map.loc[self.map['id'] == file_id]
+        if not matches.empty:
+            label = matches.description.iloc[0]
+        else:
+            label = "Unknown"  # Handle unmatched cases
+            print("Unknown: ", file_id)
 
         return (image, label)
 
@@ -422,6 +462,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--selection', type=int, help='Selection index', default=0)
     parser.add_argument('-r', '--replacement', type=int, help='Replacement index', default=0) # zero fixed for now as only elitism is avelable
     parser.add_argument('-f', '--flowers', action='store_true', help='Enable flower dataset')
+    parser.add_argument('-a', '--air', action='store_true', help='Enable planes dataset')
     
     args = vars(parser.parse_args())
 
@@ -434,10 +475,16 @@ if __name__ == "__main__":
         flowers = True
     else:
         flowers = False
-    
+    if args['air']:
+        planes = True
+    else:
+        planes = False
+
     file_name = f"generations_{generations}_population_{pop_size}_children_{child_size}_selection_{selection_index}_replacement_{replacement_index}"
     if(flowers):
         file_name = "flowers_" + file_name
+    elif(planes):
+        file_name = "planes_" + file_name
     print(f"Output file name: {file_name}")
 
     # Set up the models and dataset
@@ -456,7 +503,9 @@ if __name__ == "__main__":
     alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
 
     if(flowers):
-        dataset = ImageDataset("data/102flowers", "labels.csv", clip_processor)
+        dataset = ImageDatasetFlowers("data/102flowers", "labels.csv", clip_processor)
+    elif(planes):
+        dataset = ImageDatasetPlanes("data/fgvc-aircraft-2013b/data/images", "planes.csv", clip_processor)
     else:
         dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
@@ -547,6 +596,31 @@ if __name__ == "__main__":
         'a tattoo of the <tag>.',
     ]
 
+    extended_population = [
+        "a vintage photo of the <tag>.",
+        "a hyper-realistic painting of a <tag>.",
+        "a minimalist sketch of the <tag>.",
+        "a surreal rendering of a <tag>.",
+        "an abstract painting of the <tag>.",
+        "a futuristic version of a <tag>.",
+        "a steampunk-style <tag>.",
+        "a photo of a broken <tag>.",
+        "a 3D printed <tag>.",
+        "a hand-drawn comic of the <tag>.",
+        "a distorted photo of a <tag>.",
+        "a high contrast photo of the <tag>.",
+        "a holographic image of a <tag>.",
+        "a stop-motion model of the <tag>.",
+        "an anime-style drawing of the <tag>.",
+        "a watercolor painting of the <tag>.",
+        "a cyberpunk depiction of a <tag>.",
+        "a clay sculpture of the <tag>.",
+        "a digital collage featuring a <tag>.",
+        "a neon sign shaped like the <tag>."
+    ]
+
+    if(pop_size > 80):
+        initial_population = initial_population + extended_population
     initial_population = random.sample(initial_population, k=pop_size)
 
     # Run the genetic algorithm

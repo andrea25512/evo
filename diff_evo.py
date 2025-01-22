@@ -95,6 +95,8 @@ class ImageDataset(Dataset):
         self.map = pandas.read_csv(os.path.join(script_dir, csv_location))
         self.processor = processor
 
+        print("LENGHT: ", len(self.image_files))
+
     def __len__(self):
         return len(self.image_files)
 
@@ -115,11 +117,13 @@ class ImageDataset(Dataset):
             label = matches.description.iloc[0]
         else:
             label = "Unknown"  # Handle unmatched cases
+            print("Unknown: ", file_id)
 
         return (image, label)
 
 class ImageDatasetFlowers(Dataset):
     def __init__(self, images_root, csv_location, processor):
+        print("Flowers selected!")
         image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp')
 
         # Collect paths to all valid image files
@@ -143,17 +147,55 @@ class ImageDatasetFlowers(Dataset):
         )['pixel_values'][0]
 
         # Extract and normalize the file ID
-        file_id = self.image_files[index].split("/")[-1].strip().lower()
-        self.map["id"] = self.map["id"].str.strip().str.lower()
-        print(file_id)
+        file_id = self.image_files[index].split("/")[-1]
 
         # Find the matching description
-        matches = self.map[self.map.id == file_id]
+        matches = self.map.loc[self.map['id'] == file_id]
         if not matches.empty:
             label = matches.description.iloc[0]
-            print(label)
         else:
             label = "Unknown"  # Handle unmatched cases
+            print("Unknown: ", file_id)
+
+        return (image, label)
+
+class ImageDatasetPlanes(Dataset):
+    def __init__(self, images_root, csv_location, processor):
+        print("Planes selected!")
+        image_extensions = ('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp')
+
+        # Collect paths to all valid image files
+        self.image_files = []
+        for root, _, files in os.walk(os.path.join(script_dir, images_root)):
+            for file in files:
+                if file.lower().endswith(image_extensions):
+                    self.image_files.append(os.path.join(root, file))
+
+        self.map = pandas.read_csv(os.path.join(script_dir, csv_location))
+        self.processor = processor
+
+        print("LENGHT: ", len(self.image_files))
+
+    def __len__(self):
+        return len(self.image_files)
+
+    def __getitem__(self, index):
+        # Process the image
+        image = self.processor(
+            images=Image.open(self.image_files[index]).convert('RGB'),
+            return_tensors="pt"
+        )['pixel_values'][0]
+
+        # Extract and normalize the file ID
+        file_id = int(self.image_files[index].split("/")[-1].strip().lower()[:-4])
+        
+        # Find the matching description
+        matches = self.map.loc[self.map['id'] == file_id]
+        if not matches.empty:
+            label = matches.description.iloc[0]
+        else:
+            label = "Unknown"  # Handle unmatched cases
+            print("Unknown: ", file_id)
 
         return (image, label)
 
@@ -217,7 +259,7 @@ def crossover_mutation(model, tokenizer, ea_strategy, text1, text2, text3=None, 
     inputs = tokenizer(request_content, return_tensors="pt", truncation=True).to(first_device)
     out = model.generate(inputs=inputs.input_ids, max_new_tokens=512)
     output_text = tokenizer.batch_decode(out.cpu(), skip_special_tokens=True)[0]
-    print("Mutant: ", get_final_prompt(output_text))
+    #print("Mutant: ", get_final_prompt(output_text))
     return get_final_prompt(output_text)
     
 
@@ -299,51 +341,54 @@ def de_run(loader, initial_population, clip_model, clip_processor, model, tokeni
             print(f"  {i + 1}. {prompt} -> Fitness: {score:.4f}")
         print("\n")
 
-        # Crossover and mutation to generate children
-        for i in tqdm(range(pop_size), desc="Generation"):
-            local_random.seed(i)
-            # select each individual
-            candidate = population[i]
-            # select randomly three samples from the list, where the candidate is already excluded
-            donor1, donor2, donor3 = local_random.sample([x for x in population if x != candidate], 3)
-            # the third sampling is not needed if we use the current best prompt as value to which to add the F(rand_1 - rand_2)
-            if not donor_random:
-                donor3 = best_prompt
-            else:
-                print("donor_random")
-            print(f"Original prompt: {candidate} \nDonors: {donor1}, {donor2}, {donor3}")
-            mutant = crossover_mutation(model, tokenizer, ea_strategy, candidate, donor1, donor2, donor3)
-            mutant_score = get_fitness(loader, mutant, clip_model, clip_processor)
+        if(not generation + 1 == generations):
 
-            # Replace the candidate with the mutant if it has a higher fitness score
-            if mutant_score > fitness_scores[population.index(candidate)]:
-                population[i] = mutant
-                fitness_scores[i] = mutant_score
+            # Crossover and mutation to generate children
+            for i in tqdm(range(pop_size), desc="Generation"):
+                local_random.seed(i)
+                # select each individual
+                candidate = population[i]
+                # select randomly three samples from the list, where the candidate is already excluded
+                if(len([x for x in population if x != candidate]) < 3):
+                    donor1, donor2, donor3 = local_random.sample(population, 3)
+                else:
+                    donor1, donor2, donor3 = local_random.sample([x for x in population if x != candidate], 3)
+                # the third sampling is not needed if we use the current best prompt as value to which to add the F(rand_1 - rand_2)
+                if not donor_random:
+                    donor3 = best_prompt
+                #print(f"Original prompt: {candidate} \nDonors: {donor1}, {donor2}, {donor3}")
+                mutant = crossover_mutation(model, tokenizer, ea_strategy, candidate, donor1, donor2, donor3)
+                mutant_score = get_fitness(loader, mutant, clip_model, clip_processor)
 
-        best_fitness = np.max(fitness_scores)
-        average_fitness = np.average(fitness_scores)
-        worst_fitness = np.min(fitness_scores)
-        average_length = np.average([len(prompt) for prompt in population])
-        variance_length = average_length - last_average_length
-        last_average_length = average_length
-        added_word = 0
-        for prompt in population:
-            for word in prompt.split(" "):
-                word = word.strip().lower().translate(str.maketrans('', '', string.punctuation))
-                if(word not in seen_words):
-                    added_word += 1
-                    seen_words.append(word)
+                # Replace the candidate with the mutant if it has a higher fitness score
+                if mutant_score > fitness_scores[population.index(candidate)]:
+                    population[i] = mutant
+                    fitness_scores[i] = mutant_score
 
-        tab_metrics = pandas.DataFrame({
-            'timestamp': [generation + 1],
-            'best_fitness': [best_fitness],
-            'average_fitness': [average_fitness],
-            'worst_fitness': [worst_fitness],
-            'average_length': [average_length],
-            'variance_length': [variance_length],
-            'added_word': [added_word]
-        })
-        tab_metrics.to_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), mode='a', header=False, index=False)
+            best_fitness = np.max(fitness_scores)
+            average_fitness = np.average(fitness_scores)
+            worst_fitness = np.min(fitness_scores)
+            average_length = np.average([len(prompt) for prompt in population])
+            variance_length = average_length - last_average_length
+            last_average_length = average_length
+            added_word = 0
+            for prompt in population:
+                for word in prompt.split(" "):
+                    word = word.strip().lower().translate(str.maketrans('', '', string.punctuation))
+                    if(word not in seen_words):
+                        added_word += 1
+                        seen_words.append(word)
+
+            tab_metrics = pandas.DataFrame({
+                'timestamp': [generation + 1],
+                'best_fitness': [best_fitness],
+                'average_fitness': [average_fitness],
+                'worst_fitness': [worst_fitness],
+                'average_length': [average_length],
+                'variance_length': [variance_length],
+                'added_word': [added_word]
+            })
+            tab_metrics.to_csv(os.path.join(script_dir, f"csv_recap/{file_name}.csv"), mode='a', header=False, index=False)
 
     return best_prompt, best_score
 
@@ -358,6 +403,7 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--generations', type=int, help='Generation amount', default=10)
     parser.add_argument('-d', '--donor_random', action='store_true', help='Enable random donor')
     parser.add_argument('-f', '--flowers', action='store_true', help='Enable flower dataset')
+    parser.add_argument('-a', '--air', action='store_true', help='Enable planes dataset')
 
     args = vars(parser.parse_args())
 
@@ -371,10 +417,16 @@ if __name__ == "__main__":
         flowers = True
     else:
         flowers = False
+    if args['air']:
+        planes = True
+    else:
+        planes = False
     
     file_name = f"de_generations_{generations}_population_{pop_size}_donor_random_{donor_random}"
     if(flowers):
         file_name = "flowers_" + file_name
+    elif(planes):
+        file_name = "planes_" + file_name
     print(f"Output file name: {file_name}")
 
     # Set up the models and dataset
@@ -393,7 +445,9 @@ if __name__ == "__main__":
     alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
 
     if(flowers):
-        dataset = ImageDataset("data/102flowers", "labels.csv", clip_processor)
+        dataset = ImageDatasetFlowers("data/102flowers", "labels.csv", clip_processor)
+    elif(planes):
+        dataset = ImageDatasetPlanes("data/fgvc-aircraft-2013b/data/images", "planes.csv", clip_processor)
     else:
         dataset = ImageDataset("data/imagenet-a", "classes.csv", clip_processor)
     test_samples, _ = random_split(dataset, [test_images_number, len(dataset) - test_images_number])
