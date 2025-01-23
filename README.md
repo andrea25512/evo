@@ -30,7 +30,7 @@ In this project we adapt [EvoPrompt](https://arxiv.org/abs/2309.08532), a framew
 4. Download the weights for `alpaca` (27 GB): https://drive.google.com/file/d/10EF-DaHyO1dN_hkH2J3IalzoA2j5UcD2/view. Create a folder `weights` and extract the contents of the zip into it.
 
 5. Download the datasets and extract them in a folder `data`:
-   - Imagenet-A (https://people.eecs.berkeley.edu/~hendrycks/imagenet-a.tar)
+   - Imagenet-A (https://drive.google.com/file/d/1O-Ljtr99F2JI4QW9KSO3DjipI3oRkfyY/view?usp=sharing)
    - Flower102 (https://www.robots.ox.ac.uk/~vgg/data/flowers/102/102flowers.tgz)
    - FGVC-Aircraft (https://www.robots.ox.ac.uk/~vgg/data/fgvc-aircraft/archives/fgvc-aircraft-2013b.tar.gz)
 
