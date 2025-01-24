@@ -1,6 +1,6 @@
 import subprocess
 import re
-
+'''
 # Define parameter combinations
 configs1 = [
     "-a -g 10 -p 10 -c 10 -s 0 -r 0",
@@ -61,24 +61,11 @@ for config in configs1:
             stdout=log,  # Redirect standard output to the log file
             stderr=subprocess.STDOUT  # Redirect standard error to the same log file
         )
-
+'''
 # Define parameter combinations
 configs2 = [
-    "-g 10 -p 10 -f",
-    "-g 10 -p 10 -f -d",
-    "-g 10 -p 20 -f",
-    "-g 10 -p 20 -f -d",
-    "-g 10 -p 50 -f",
-    "-g 10 -p 50 -f -d",
-    "-g 10 -p 100 -f",
-    "-g 10 -p 100 -f -d"
-
+    "-g 10 -p 100 -f -d",
     "-g 10 -p 10 -a",
-    "-g 10 -p 10 -a -d",
-    "-g 10 -p 20 -a",
-    "-g 10 -p 20 -a -d",
-    "-g 10 -p 50 -a",
-    "-g 10 -p 50 -a -d",
     "-g 10 -p 100 -a",
     "-g 10 -p 100 -a -d"
 ]

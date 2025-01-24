@@ -770,3 +770,9 @@ Traceback (most recent call last):
   File "/usr/lib/python3.12/subprocess.py", line 2047, in _wait
     time.sleep(delay)
 KeyboardInterrupt
+/home/andrea.ceron/evo/run.py:3: SyntaxWarning: invalid escape sequence '\w'
+  '''
+Running: python diff_evo.py -g 10 -p 100 -f -d
+Running: python diff_evo.py -g 10 -p 10 -a
+Running: python diff_evo.py -g 10 -p 100 -a
+Running: python diff_evo.py -g 10 -p 100 -a -d
