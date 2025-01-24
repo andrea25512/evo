@@ -48,7 +48,7 @@ for config in configs1:
     log_file = re.sub(r'[^\w\-]', '_', log_file)
     
     # Build the full command
-    command = f"python3 main.py {config}"
+    command = f"python3 gen_alg.py {config}"
     
     print(f"Running: {command}")
     

@@ -1,5 +1,9 @@
 # Evolutionary Prompt Tuning
 
+Repository for the project of the course of *Bio-Inspired Artificial Intelligence* (Academic Year 2024/2025).
+
+In this project we adapt [EvoPrompt](https://arxiv.org/abs/2309.08532), a framework for automatic prompt optimization, to the task of prompt optimization for vision-language models (e.g. [CLIP](https://github.com/openai/CLIP)). EvoPrompt works by connecting LLMs to Evolutionary Algorithms. In particular: Genetic Algorithm and Differential Evolution.
+
 ## Installation
 
 1. Clone the repository:
@@ -23,6 +27,49 @@
    git clone https://github.com/tatsu-lab/stanford_alpaca.git
    ```
 
-4. Download the weights for `alpaca` (27 GB): https://drive.google.com/file/d/10EF-DaHyO1dN_hkH2J3IalzoA2j5UcD2/view.
+4. Download the weights for `alpaca` (27 GB): https://drive.google.com/file/d/10EF-DaHyO1dN_hkH2J3IalzoA2j5UcD2/view. Create a folder `weights` and extract the contents of the zip into it.
 
-5. Create a folder `weights` and extract the contents of the zip into it.
+5. Download the datasets and extract them in a folder `data`:
+   - Imagenet-A (https://drive.google.com/file/d/1O-Ljtr99F2JI4QW9KSO3DjipI3oRkfyY/view?usp=sharing)
+   - Flower102 (https://www.robots.ox.ac.uk/~vgg/data/flowers/102/102flowers.tgz)
+   - FGVC-Aircraft (https://www.robots.ox.ac.uk/~vgg/data/fgvc-aircraft/archives/fgvc-aircraft-2013b.tar.gz)
+
+## Experiments
+
+To reproduce our experiments:
+- Genetic Algorithm
+```bash
+python gen_alg_run.py
+```
+
+- Differential Evolution
+```bash
+python diff_evo_run.py
+```
+
+The default dataset is `imagenet-a`. To test other datasets (`Flowers102` and `FGVC-Aircraft`), add their corresponding flag:
+```bash
+python diff_evo_run.py --flowers
+python diff_evo_run.py --air
+```
+## Code Structure
+```bash
+.
+├── csv_recap # recaps of the runs
+├── data/ #datasets
+│   ├── imagenet-a
+│   ├── flowers
+│   └── planes
+├── images # graphs of the runs
+├── stanford_alpaca # LLM
+├── weights # alpaca's weights
+├── classes.csv # imagenet-a labels
+├── diff_evo_run.py # script to run the diff_evo with different settings
+├── diff_evo.py # main script for differential evolution
+├── gen_alg_run.py # script to run the gen_alg with different settings
+├── gen_alg.py # main script for genetic algorithm
+├── generate_graph.py # util for generating graphs
+├── labels.csv # Flowers102 labels
+├── planes.csv # FGVC-Aircraft labels
+└── requirements.txt
+```
