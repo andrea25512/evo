@@ -566,7 +566,8 @@ if __name__ == "__main__":
     initial_population = random.sample(initial_population, k=pop_size)
 
     # Run the genetic algorithm
-    best_prompt, best_score = de_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, donor_random=donor_random, file_name=file_name)
+    with torch.no_grad():
+        best_prompt, best_score = de_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, donor_random=donor_random, file_name=file_name)
     #mutant = crossover_mutation(alpaca_model, alpaca_tokenizer, "differential_evolution", 'a jpeg corrupted photo of the <tag>.', 'a photo of a nice <tag>.', 'a rendition of the <tag>.', 'a bright photo of a <tag>.')
     #print(mutant)
     print(f"Best Prompt: {best_prompt}")

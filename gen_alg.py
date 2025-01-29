@@ -624,7 +624,8 @@ if __name__ == "__main__":
     initial_population = random.sample(initial_population, k=pop_size)
 
     # Run the genetic algorithm
-    best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size, selection_index, replacement_index, file_name)
+    with torch.no_grad():
+        best_prompt, best_score = ga_run(loader, initial_population, clip_model, clip_processor, alpaca_model, alpaca_tokenizer, generations, pop_size, child_size, selection_index, replacement_index, file_name)
 
     print(f"Best Prompt: {best_prompt}")
     print(f"Best Score: {best_score}")
