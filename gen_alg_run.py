@@ -64,10 +64,9 @@ for config in configs1:
 '''
 # Define parameter combinations
 configs2 = [
-    "-g 10 -p 100 -f -d",
-    "-g 10 -p 10 -a",
-    "-g 10 -p 100 -a",
-    "-g 10 -p 100 -a -d"
+    "-g 10 -p 50 -c 100 -r 2 -s 2",
+    "-g 10 -p 50 -c 100 -r 0 -s 2",
+    "-g 10 -p 50 -c 100 -r 1 -s 2",
 ]
 
 
@@ -78,7 +77,7 @@ for config in configs2:
     log_file = re.sub(r'[^\w\-]', '_', log_file)
     
     # Build the full command
-    command = f"python diff_evo.py {config}"
+    command = f"python gen_alg.py {config}"
     
     print(f"Running: {command}")
     

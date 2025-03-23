@@ -498,9 +498,9 @@ if __name__ == "__main__":
     quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     weights_dir = os.path.normpath(os.path.join(script_dir, "weights/alpaca/"))
     #alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(weights_dir, quantization_config=quantization_config)
-    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained(os.path.join(script_dir,"weights/alpaca/"), device_map="auto")
+    alpaca_model = transformers.AutoModelForCausalLM.from_pretrained("wxjiao/alpaca-7b")
     print("Model directory: ", weights_dir)
-    alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained(weights_dir)
+    alpaca_tokenizer = transformers.AutoTokenizer.from_pretrained("wxjiao/alpaca-7b")
 
     if(flowers):
         dataset = ImageDatasetFlowers("data/102flowers", "labels.csv", clip_processor)

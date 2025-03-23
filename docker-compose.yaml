@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  dev:
+    build: .
+    container_name: rust_python_env
+    volumes:
+      - .:/workspace
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
