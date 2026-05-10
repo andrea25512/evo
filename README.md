@@ -73,3 +73,23 @@ python diff_evo_run.py --air
 ├── planes.csv # FGVC-Aircraft labels
 └── requirements.txt
 ```
+
+## Citation
+If you find this work useful, please consider citing:
+```bibtex
+@InProceedings{10.1007/978-3-032-23607-4_11,
+author="Ceron, Andrea
+and Don{\`a}, Ivan
+and Iacca, Giovanni",
+editor="Garc{\'i}a-S{\'a}nchez, Pablo
+and D{\'i}az {\'A}lvarez, Josefa
+and Murphy, Aidan",
+title="CLIP Prompt Optimization with Evolutionary-Driven LLMs",
+booktitle="Applications of Evolutionary Computation",
+year="2026",
+publisher="Springer Nature Switzerland",
+address="Cham",
+pages="167--182",
+isbn="978-3-032-23607-4"
+}
+```
